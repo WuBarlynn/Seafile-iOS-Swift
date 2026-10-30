@@ -71,9 +71,9 @@ struct TransferCenterView: View {
             SectionHeader(title: title, subtitle: subtitle)
             VStack(spacing: 10) {
                 ForEach(records) { record in
-                    TransferRecordCard(record: record) {
-                        transfers.cancelTransfer(id: record.id)
-                    }
+                    TransferRecordCard(record: record,
+                                       onCancel: { transfers.cancelTransfer(id: record.id) },
+                                       onRetry: { transfers.retryTransfer(id: record.id) })
                 }
             }
         }
@@ -83,6 +83,7 @@ struct TransferCenterView: View {
 private struct TransferRecordCard: View {
     let record: TransferCenter.TransferRecord
     let onCancel: () -> Void
+    let onRetry: () -> Void
 
     @Environment(Session.self) private var session
 
@@ -125,6 +126,18 @@ private struct TransferRecordCard: View {
                     .buttonStyle(.plain)
                     .glassEffect(.regular.interactive(), in: .circle)
                     .accessibilityLabel("Cancel")
+                } else if record.canRetry {
+                    Button {
+                        onRetry()
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 12, weight: .semibold))
+                            .frame(width: 28, height: 28)
+                            .contentShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .glassEffect(.regular.interactive(), in: .circle)
+                    .accessibilityLabel("Retry")
                 } else {
                     Image(systemName: statusIcon)
                         .font(.system(size: 15, weight: .semibold))

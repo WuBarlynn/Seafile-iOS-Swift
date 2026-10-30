@@ -19,9 +19,24 @@ final class TransferCenter {
         var progress: TransferProgress
         var finishedAt: Date? = nil
         var isCancelled = false
+        var downloadVersion: String? = nil
+        var persistOffline = false
+        var uploadReplace = false
+        var retrySourceURL: URL? = nil
 
         var isActive: Bool {
             !isCancelled && progress.isActive
+        }
+
+        var canRetry: Bool {
+            guard !isActive, !isCancelled else { return false }
+            guard case .failed = progress.state else { return false }
+            switch kind {
+            case .download:
+                return downloadVersion != nil
+            case .upload:
+                return retrySourceURL != nil
+            }
         }
     }
 
@@ -83,7 +98,9 @@ final class TransferCenter {
                   name: name,
                   repoID: repoID,
                   path: path,
-                  progress: TransferProgress(state: .queued))
+                  progress: TransferProgress(state: .queued),
+                  downloadVersion: version,
+                  persistOffline: persistOffline)
 
         let cacheKey = key(repoID: repoID, path: path)
         downloads[cacheKey] = TransferProgress(state: .running)
@@ -155,7 +172,8 @@ final class TransferCenter {
                   name: fileName,
                   repoID: repoID,
                   path: dirPath,
-                  progress: TransferProgress(state: .queued))
+                  progress: TransferProgress(state: .queued),
+                  uploadReplace: replace)
         uploadJobs.insert(UploadJob(id: jobID,
                                        fileName: fileName,
                                        progress: TransferProgress(state: .queued)),
@@ -220,7 +238,12 @@ final class TransferCenter {
             if cancelled {
                 markCancelled(id: jobID)
             } else {
+                let retryURL = persistRetrySource(fileURL: fileURL, id: jobID)
                 finishRecord(id: jobID, progress: progress)
+                if let retryURL,
+                   let index = transferRecords.firstIndex(where: { $0.id == jobID }) {
+                    transferRecords[index].retrySourceURL = retryURL
+                }
             }
             cancellationTokens[jobID] = nil
             scheduleCleanup(jobID: jobID, delay: 6)
@@ -253,7 +276,41 @@ final class TransferCenter {
     }
 
     func clearCompletedTransfers() {
+        let completed = transferRecords.filter { !$0.isActive }
+        for record in completed {
+            cleanupRetrySource(id: record.id)
+        }
         transferRecords.removeAll { !$0.isActive }
+    }
+
+    func retryTransfer(id: String) {
+        guard let index = transferRecords.firstIndex(where: { $0.id == id }) else { return }
+        let record = transferRecords[index]
+        guard record.canRetry else { return }
+
+        switch record.kind {
+        case .download:
+            guard let version = record.downloadVersion else { return }
+            transferRecords.remove(at: index)
+            Task {
+                _ = try? await self.download(repoID: record.repoID,
+                                             path: record.path,
+                                             name: record.name,
+                                             version: version,
+                                             persistOffline: record.persistOffline)
+            }
+        case .upload:
+            guard let source = record.retrySourceURL else { return }
+            transferRecords.remove(at: index)
+            Task {
+                _ = try? await self.upload(fileURL: source,
+                                           fileName: record.name,
+                                           repoID: record.repoID,
+                                           dirPath: record.path,
+                                           replace: record.uploadReplace)
+                self.cleanupRetrySource(id: id)
+            }
+        }
     }
 
     var activeTransfers: [TransferRecord] {
@@ -275,19 +332,30 @@ final class TransferCenter {
                            name: String,
                            repoID: String,
                            path: String,
-                           progress: TransferProgress) {
+                           progress: TransferProgress,
+                           downloadVersion: String? = nil,
+                           persistOffline: Bool = false,
+                           uploadReplace: Bool = false) {
         transferRecords.insert(TransferRecord(id: id,
                                               kind: kind,
                                               name: name,
                                               repoID: repoID,
                                               path: path,
                                               startedAt: Date(),
-                                              progress: progress),
+                                              progress: progress,
+                                              downloadVersion: downloadVersion,
+                                              persistOffline: persistOffline,
+                                              uploadReplace: uploadReplace),
                                at: 0)
         if transferRecords.count > 120 {
             let active = transferRecords.filter(\.isActive)
-            let completed = transferRecords.filter { !$0.isActive }.prefix(max(0, 100 - active.count))
-            transferRecords = active + completed
+            let completed = transferRecords.filter { !$0.isActive }
+            let keptCompleted = Array(completed.prefix(max(0, 100 - active.count)))
+            let removed = completed.dropFirst(keptCompleted.count)
+            for record in removed {
+                cleanupRetrySource(id: record.id)
+            }
+            transferRecords = active + keptCompleted
         }
     }
 
@@ -309,6 +377,32 @@ final class TransferCenter {
         transferRecords[index].progress = TransferProgress(state: .failed(String(localized: "Cancelled")))
         transferRecords[index].isCancelled = true
         transferRecords[index].finishedAt = Date()
+    }
+
+    private func persistRetrySource(fileURL: URL, id: String) -> URL? {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("SeafileTransferRetry", isDirectory: true)
+            .appendingPathComponent(id, isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            var name = FileNames.sanitized(fileURL.lastPathComponent)
+            if name.isEmpty { name = "upload" }
+            let destination = directory.appendingPathComponent(name)
+            if FileManager.default.fileExists(atPath: destination.path) {
+                try? FileManager.default.removeItem(at: destination)
+            }
+            try FileManager.default.copyItem(at: fileURL, to: destination)
+            return destination
+        } catch {
+            return nil
+        }
+    }
+
+    private func cleanupRetrySource(id: String) {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("SeafileTransferRetry", isDirectory: true)
+            .appendingPathComponent(id, isDirectory: true)
+        try? FileManager.default.removeItem(at: directory)
     }
 
     private func scheduleCleanup(jobID: String, delay: TimeInterval = 3) {

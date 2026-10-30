@@ -61,11 +61,16 @@ struct DirentRow: View {
     }
 
     private func loadThumbnail() async {
-        guard !repo.encrypted,
-              !dirent.isDirectory,
-              kind == .image,
-              dirent.thumbnailPath?.isEmpty == false else { return }
-        thumbnail = await session.thumbnails.image(repoID: repo.id, path: dirent.path)
+        guard !dirent.isDirectory, kind == .image else { return }
+        if repo.encrypted {
+            thumbnail = await session.thumbnails.localImage(repoID: repo.id,
+                                                            path: dirent.path,
+                                                            name: dirent.name,
+                                                            version: dirent.version)
+        } else {
+            guard dirent.thumbnailPath?.isEmpty == false else { return }
+            thumbnail = await session.thumbnails.image(repoID: repo.id, path: dirent.path)
+        }
     }
 }
 
@@ -114,10 +119,15 @@ struct DirentGridCell: View {
     }
 
     private func loadThumbnail() async {
-        guard !repo.encrypted,
-              !dirent.isDirectory,
-              kind == .image,
-              dirent.thumbnailPath?.isEmpty == false else { return }
-        thumbnail = await session.thumbnails.image(repoID: repo.id, path: dirent.path)
+        guard !dirent.isDirectory, kind == .image else { return }
+        if repo.encrypted {
+            thumbnail = await session.thumbnails.localImage(repoID: repo.id,
+                                                            path: dirent.path,
+                                                            name: dirent.name,
+                                                            version: dirent.version)
+        } else {
+            guard dirent.thumbnailPath?.isEmpty == false else { return }
+            thumbnail = await session.thumbnails.image(repoID: repo.id, path: dirent.path)
+        }
     }
 }

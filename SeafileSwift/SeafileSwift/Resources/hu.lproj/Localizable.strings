@@ -566,3 +566,7 @@
 "Live Photo" = "Live Photo";
 "The Live Photo video is not available yet. Please try again later." = "A Live Photo videója még nem érhető el. Kérjük, próbálja újra később.";
 "Could not convert this Live Photo for upload." = "Nem sikerült átalakítani ezt a Live Photo-t a feltöltéshez.";
+
+"Enable Wiki" = "Wiki engedélyezése";
+"Background Upload" = "Feltöltés a háttérben";
+"Let iOS continue backing up photos while Seafile is not open." = "Engedélyezze, hogy az iOS a Seafile bezárása után is biztonsági másolatot készítsen a fényképekről.";

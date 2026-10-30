@@ -566,3 +566,7 @@
 "Live Photo" = "Live Photo";
 "The Live Photo video is not available yet. Please try again later." = "فيديو Live Photo غير متاح بعد. يرجى المحاولة لاحقًا.";
 "Could not convert this Live Photo for upload." = "تعذّر تحويل Live Photo هذه للرفع.";
+
+"Enable Wiki" = "تفعيل الويكي";
+"Background Upload" = "التحميل في الخلفية";
+"Let iOS continue backing up photos while Seafile is not open." = "اسمح لنظام iOS بمتابعة نسخ الصور احتياطيًا أثناء عدم فتح Seafile.";

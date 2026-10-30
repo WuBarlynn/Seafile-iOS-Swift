@@ -239,6 +239,17 @@ struct SettingsView: View {
                     }
                 }
                 .tint(.seafileOrange)
+
+                if session.wikiAvailable {
+                    Divider().opacity(0.5)
+
+                    Toggle(isOn: Binding(get: { settings.wikiTabEnabled },
+                                         set: { settings.wikiTabEnabled = $0 })) {
+                        Label("Enable Wiki", systemImage: "book.pages")
+                            .font(.subheadline)
+                    }
+                    .tint(.seafileOrange)
+                }
             }
         }
         .glassCard(cornerRadius: 24, padding: 16)
@@ -297,6 +308,17 @@ struct SettingsView: View {
                             Label("Wi-Fi Only", systemImage: "wifi")
                                 .font(.subheadline)
                             Text("Wait for a Wi-Fi connection before uploading.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .tint(.seafileOrange)
+
+                    Toggle(isOn: backgroundPhotoSyncBinding) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Label("Background Upload", systemImage: "arrow.triangle.2.circlepath")
+                                .font(.subheadline)
+                            Text("Let iOS continue backing up photos while Seafile is not open.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -384,6 +406,18 @@ struct SettingsView: View {
                         } else if enabled, session.photoSync.destinationRepoID == nil {
                             showPhotoSyncLibraryPicker = true
                         }
+                    }
+                })
+    }
+
+    private var backgroundPhotoSyncBinding: Binding<Bool> {
+        Binding(get: { settings.backgroundPhotoSync },
+                set: { enabled in
+                    settings.backgroundPhotoSync = enabled
+                    if enabled {
+                        PhotoSyncBackgroundScheduler.shared.schedule()
+                    } else {
+                        PhotoSyncBackgroundScheduler.shared.cancel()
                     }
                 })
     }

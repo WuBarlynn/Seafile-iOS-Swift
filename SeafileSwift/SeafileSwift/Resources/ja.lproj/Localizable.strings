@@ -564,3 +564,7 @@
 "Live Photo" = "Live Photo";
 "The Live Photo video is not available yet. Please try again later." = "Live Photo のビデオはまだ利用できません。しばらくしてからもう一度お試しください。";
 "Could not convert this Live Photo for upload." = "この Live Photo をアップロード用に変換できませんでした。";
+
+"Enable Wiki" = "Wiki を有効にする";
+"Background Upload" = "バックグラウンドアップロード";
+"Let iOS continue backing up photos while Seafile is not open." = "Seafile を開いていない間も iOS による写真のバックアップを続行します。";

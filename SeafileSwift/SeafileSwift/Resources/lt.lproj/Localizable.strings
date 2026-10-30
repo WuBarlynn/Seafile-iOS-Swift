@@ -566,3 +566,7 @@
 "Live Photo" = "Live Photo";
 "The Live Photo video is not available yet. Please try again later." = "„Live Photo“ vaizdo įrašas dar neprieinamas. Bandykite vėliau.";
 "Could not convert this Live Photo for upload." = "Nepavyko konvertuoti šios „Live Photo“ įkėlimui.";
+
+"Enable Wiki" = "Įjungti viki";
+"Background Upload" = "Įkėlimas fone";
+"Let iOS continue backing up photos while Seafile is not open." = "Leisti iOS toliau kurti nuotraukų atsargines kopijas, kai „Seafile“ neatidaryta.";

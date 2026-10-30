@@ -25,7 +25,8 @@ final class PhotoSyncBackgroundScheduler {
     }
 
     func schedule() {
-        guard AppModel.shared?.session?.photoSync.isEnabled == true else { return }
+        guard AppModel.shared?.settings.backgroundPhotoSync == true,
+              AppModel.shared?.session?.photoSync.isEnabled == true else { return }
 
         let refresh = BGAppRefreshTaskRequest(identifier: Self.refreshIdentifier)
         refresh.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
@@ -46,6 +47,7 @@ final class PhotoSyncBackgroundScheduler {
     nonisolated private static func handle(_ task: BGTask) {
         let work = Task { @MainActor in
             guard let app = AppModel.shared,
+                  app.settings.backgroundPhotoSync,
                   let manager = await app.sessionForBackgroundTask()?.photoSync,
                   manager.isEnabled else {
                 task.setTaskCompleted(success: true)

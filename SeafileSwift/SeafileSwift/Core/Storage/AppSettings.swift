@@ -39,6 +39,8 @@ final class AppSettings {
         static let gridMode = "settings.gridMode"
         static let convertPhotosToJPEG = "settings.convertPhotosToJPEG"
         static let uploadLivePhotos = "settings.uploadLivePhotos"
+        static let wikiTabEnabled = "settings.wikiTabEnabled"
+        static let backgroundPhotoSync = "settings.backgroundPhotoSync"
     }
 
     var appearance: AppearancePreference {
@@ -73,6 +75,14 @@ final class AppSettings {
         didSet { UserDefaults.standard.set(uploadLivePhotos, forKey: Keys.uploadLivePhotos) }
     }
 
+    var wikiTabEnabled: Bool {
+        didSet { UserDefaults.standard.set(wikiTabEnabled, forKey: Keys.wikiTabEnabled) }
+    }
+
+    var backgroundPhotoSync: Bool {
+        didSet { UserDefaults.standard.set(backgroundPhotoSync, forKey: Keys.backgroundPhotoSync) }
+    }
+
     init() {
         let defaults = UserDefaults.standard
         appearance = AppearancePreference(rawValue: defaults.string(forKey: Keys.appearance) ?? "") ?? .system
@@ -83,5 +93,7 @@ final class AppSettings {
         rememberRepoPasswords = defaults.object(forKey: AppSettingsKeys.rememberRepoPasswords) as? Bool ?? true
         convertPhotosToJPEG = defaults.object(forKey: Keys.convertPhotosToJPEG) as? Bool ?? false
         uploadLivePhotos = defaults.object(forKey: Keys.uploadLivePhotos) as? Bool ?? false
+        wikiTabEnabled = defaults.object(forKey: Keys.wikiTabEnabled) as? Bool ?? true
+        backgroundPhotoSync = defaults.object(forKey: Keys.backgroundPhotoSync) as? Bool ?? true
     }
 }

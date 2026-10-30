@@ -566,3 +566,7 @@
 "Live Photo" = "Live Photo";
 "The Live Photo video is not available yet. Please try again later." = "Myndbandið í Live Photo er ekki tiltækt ennþá. Reyndu aftur síðar.";
 "Could not convert this Live Photo for upload." = "Ekki tókst að umbreyta þessu Live Photo fyrir upphleðslu.";
+
+"Enable Wiki" = "Virkja wiki";
+"Background Upload" = "Hleðsla í bakgrunni";
+"Let iOS continue backing up photos while Seafile is not open." = "Leyfa iOS að halda áfram að taka öryggisafrit af myndum þegar Seafile er ekki opið.";

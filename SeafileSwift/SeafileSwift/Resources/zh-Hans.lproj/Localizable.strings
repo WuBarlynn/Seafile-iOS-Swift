@@ -589,3 +589,7 @@
 "Live Photo" = "实况照片";
 "The Live Photo video is not available yet. Please try again later." = "Live Photo 的视频暂不可用，请稍后重试。";
 "Could not convert this Live Photo for upload." = "无法转换该 Live Photo 用于上传。";
+
+"Enable Wiki" = "开启知识库";
+"Background Upload" = "后台上传";
+"Let iOS continue backing up photos while Seafile is not open." = "允许 iOS 在 Seafile 未打开时继续备份照片。";

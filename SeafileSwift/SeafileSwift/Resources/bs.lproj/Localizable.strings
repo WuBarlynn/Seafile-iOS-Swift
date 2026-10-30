@@ -566,3 +566,7 @@
 "Live Photo" = "Live Photo";
 "The Live Photo video is not available yet. Please try again later." = "Videozapis Live Photo još nije dostupan. Pokušajte kasnije.";
 "Could not convert this Live Photo for upload." = "Nije moguće pretvoriti ovaj Live Photo za otpremanje.";
+
+"Enable Wiki" = "Omogući wiki";
+"Background Upload" = "Pozadinsko otpremanje";
+"Let iOS continue backing up photos while Seafile is not open." = "Dozvoli iOS-u da nastavi sigurnosno kopiranje fotografija dok Seafile nije otvoren.";

@@ -11,6 +11,7 @@ enum MainTab: Hashable {
 struct MainView: View {
     let session: Session
     @Environment(AppModel.self) private var app
+    @Environment(AppSettings.self) private var settings
     @State private var selection: MainTab = MainView.initialTab
 
     private static var initialTab: MainTab {
@@ -35,7 +36,7 @@ struct MainView: View {
             Tab("Starred", systemImage: "star.fill", value: MainTab.starred) {
                 StarredView()
             }
-            if session.wikiAvailable {
+            if session.wikiAvailable && settings.wikiTabEnabled {
                 Tab("Knowledge", systemImage: "book.pages.fill", value: MainTab.knowledge) {
                     WikiListView()
                 }

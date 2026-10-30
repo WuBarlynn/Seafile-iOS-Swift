@@ -566,3 +566,7 @@
 "Live Photo" = "Live Photo";
 "The Live Photo video is not available yet. Please try again later." = "Video Live Photo zatím není k dispozici. Zkuste to později.";
 "Could not convert this Live Photo for upload." = "Tuto Live Photo nelze pro nahrání převést.";
+
+"Enable Wiki" = "Povolit wiki";
+"Background Upload" = "Nahrávání na pozadí";
+"Let iOS continue backing up photos while Seafile is not open." = "Umožněte iOS pokračovat v zálohování fotografií, když Seafile není otevřený.";

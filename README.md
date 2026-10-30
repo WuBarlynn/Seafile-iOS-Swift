@@ -25,7 +25,7 @@ committed.
 
 No GitHub Release or prebuilt IPA is published from this repository.
 
-The current version is **1.0.2**. The rewrite is versioned independently from
+The current version is **1.0.3**. The rewrite is versioned independently from
 the upstream Seafile iOS client.
 
 ## Requirements
@@ -128,7 +128,7 @@ cp -R build-device/Build/Products/Release-iphoneos/*.appex Payload/SeafileSwift.
 ## Implemented areas
 
 The rewrite includes account and SSO login (password, two-step verification,
-Shibboleth and client SSO), multi-account switching, library browsing,
+Shibboleth and client SSO), multi-account switching and editing, library browsing,
 copy/move/delete and batch selection (including starring), previews with
 star/save/delete actions, Markdown/Python editing, SeaDoc editing and comments,
 online Office, Wiki, search, starred items, activities, settings, local
@@ -150,11 +150,12 @@ selection supports starring and offline downloads. The app registers the
 them to the folder currently shown. Audio and video can keep playing in the
 background.
 
-Known gaps compared with the upstream client: WeChat sharing (needs the WeChat
-SDK and an app registration), and editing of SeaDoc geolocation metadata
-(read-only, matching upstream). The File Provider exposes no trash because the
-upstream provider deliberately reports that feature as unsupported. Check the
-source and commit history for details.
+Known gaps compared with the upstream client: direct WeChat session sharing
+(the legacy client links the WeChat SDK; here files can be shared to WeChat
+through the system share sheet when WeChat is installed), and editing of SeaDoc
+geolocation metadata (read-only, matching upstream). The File Provider exposes
+no trash because the upstream provider deliberately reports that feature as
+unsupported. Check the source and commit history for details.
 
 ## License
 

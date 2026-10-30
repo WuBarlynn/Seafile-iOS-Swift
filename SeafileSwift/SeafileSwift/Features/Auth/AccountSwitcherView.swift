@@ -26,6 +26,14 @@ struct AccountSwitcherView: View {
                         ForEach(accounts) { account in
                             if account.id == session.account.id {
                                 accountRow(account, isCurrent: true)
+                                    .contextMenu {
+                                        Button {
+                                            loginAccount = account
+                                            showLogin = true
+                                        } label: {
+                                            Label("Edit Account", systemImage: "pencil")
+                                        }
+                                    }
                             } else {
                                 Button {
                                     if app.token(for: account) == nil {
@@ -42,6 +50,12 @@ struct AccountSwitcherView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .contextMenu {
+                                    Button {
+                                        loginAccount = account
+                                        showLogin = true
+                                    } label: {
+                                        Label("Edit Account", systemImage: "pencil")
+                                    }
                                     Button(role: .destructive) {
                                         app.removeAccount(account)
                                     } label: {

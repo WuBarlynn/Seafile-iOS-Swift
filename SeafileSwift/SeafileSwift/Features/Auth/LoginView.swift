@@ -8,12 +8,14 @@ struct LoginView: View {
     @State private var showSSO = false
     @State private var showClientCertificate = false
     @FocusState private var focus: Field?
+    private let editingAccount: Account?
 
     private enum Field: Hashable {
         case server, username, password, otp
     }
 
     init(account: Account? = nil) {
+        editingAccount = account
         _model = State(initialValue: LoginModel(account: account))
     }
 
@@ -40,7 +42,9 @@ struct LoginView: View {
                 }
                 .scrollDismissesKeyboard(.interactively)
             }
-            .navigationTitle(model.requiresOTP ? LocalizedStringKey("Two-Step Verification") : LocalizedStringKey("Add Account"))
+            .navigationTitle(model.requiresOTP
+                             ? LocalizedStringKey("Two-Step Verification")
+                             : LocalizedStringKey(editingAccount == nil ? "Add Account" : "Edit Account"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -261,6 +265,9 @@ struct LoginView: View {
         Task {
             guard let result = await model.submit() else { return }
             await app.signIn(account: result.0, token: result.1)
+            if let editingAccount, editingAccount.id != result.0.id {
+                app.removeAccount(editingAccount)
+            }
             dismiss()
         }
     }

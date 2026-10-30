@@ -23,6 +23,7 @@ final class TransferCenter {
         var persistOffline = false
         var uploadReplace = false
         var retrySourceURL: URL? = nil
+        var retryAttempt = 0
 
         var isActive: Bool {
             !isCancelled && progress.isActive
@@ -75,7 +76,8 @@ final class TransferCenter {
                   path: String,
                   name: String,
                   version: String,
-                  persistOffline: Bool = false) async throws -> URL {
+                  persistOffline: Bool = false,
+                  retryAttempt: Int = 0) async throws -> URL {
         if let existing = offlineFiles.existingURL(repoID: repoID, path: path, name: name, version: version) {
             return existing
         }
@@ -100,7 +102,8 @@ final class TransferCenter {
                   path: path,
                   progress: TransferProgress(state: .queued),
                   downloadVersion: version,
-                  persistOffline: persistOffline)
+                  persistOffline: persistOffline,
+                  retryAttempt: retryAttempt)
 
         let cacheKey = key(repoID: repoID, path: path)
         downloads[cacheKey] = TransferProgress(state: .running)
@@ -152,6 +155,9 @@ final class TransferCenter {
                 markCancelled(id: recordID)
             } else {
                 finishRecord(id: recordID, progress: progress)
+                if retryAttempt == 0, isRetryable(error) {
+                    scheduleAutomaticRetry(id: recordID)
+                }
             }
             cancellationTokens[recordID] = nil
             throw error
@@ -163,7 +169,8 @@ final class TransferCenter {
                 fileName: String,
                 repoID: String,
                 dirPath: String,
-                replace: Bool = false) async throws -> String {
+                replace: Bool = false,
+                retryAttempt: Int = 0) async throws -> String {
         let jobID = UUID().uuidString
         let token = TransferCancellationToken()
         cancellationTokens[jobID] = token
@@ -173,7 +180,8 @@ final class TransferCenter {
                   repoID: repoID,
                   path: dirPath,
                   progress: TransferProgress(state: .queued),
-                  uploadReplace: replace)
+                  uploadReplace: replace,
+                  retryAttempt: retryAttempt)
         uploadJobs.insert(UploadJob(id: jobID,
                                        fileName: fileName,
                                        progress: TransferProgress(state: .queued)),
@@ -244,6 +252,9 @@ final class TransferCenter {
                    let index = transferRecords.firstIndex(where: { $0.id == jobID }) {
                     transferRecords[index].retrySourceURL = retryURL
                 }
+                if retryURL != nil, retryAttempt == 0, isRetryable(error) {
+                    scheduleAutomaticRetry(id: jobID)
+                }
             }
             cancellationTokens[jobID] = nil
             scheduleCleanup(jobID: jobID, delay: 6)
@@ -297,7 +308,8 @@ final class TransferCenter {
                                              path: record.path,
                                              name: record.name,
                                              version: version,
-                                             persistOffline: record.persistOffline)
+                                             persistOffline: record.persistOffline,
+                                             retryAttempt: record.retryAttempt + 1)
             }
         case .upload:
             guard let source = record.retrySourceURL else { return }
@@ -307,7 +319,8 @@ final class TransferCenter {
                                            fileName: record.name,
                                            repoID: record.repoID,
                                            dirPath: record.path,
-                                           replace: record.uploadReplace)
+                                           replace: record.uploadReplace,
+                                           retryAttempt: record.retryAttempt + 1)
                 self.cleanupRetrySource(id: id)
             }
         }
@@ -335,7 +348,8 @@ final class TransferCenter {
                            progress: TransferProgress,
                            downloadVersion: String? = nil,
                            persistOffline: Bool = false,
-                           uploadReplace: Bool = false) {
+                           uploadReplace: Bool = false,
+                           retryAttempt: Int = 0) {
         transferRecords.insert(TransferRecord(id: id,
                                               kind: kind,
                                               name: name,
@@ -345,7 +359,8 @@ final class TransferCenter {
                                               progress: progress,
                                               downloadVersion: downloadVersion,
                                               persistOffline: persistOffline,
-                                              uploadReplace: uploadReplace),
+                                              uploadReplace: uploadReplace,
+                                              retryAttempt: retryAttempt),
                                at: 0)
         if transferRecords.count > 120 {
             let active = transferRecords.filter(\.isActive)
@@ -377,6 +392,28 @@ final class TransferCenter {
         transferRecords[index].progress = TransferProgress(state: .failed(String(localized: "Cancelled")))
         transferRecords[index].isCancelled = true
         transferRecords[index].finishedAt = Date()
+    }
+
+    private func isRetryable(_ error: Error) -> Bool {
+        guard let apiError = error as? APIError else { return false }
+        switch apiError {
+        case .network:
+            return true
+        case .http(let status, _):
+            return status == 408 || status == 429 || status >= 500
+        default:
+            return false
+        }
+    }
+
+    private func scheduleAutomaticRetry(id: String) {
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            guard let self,
+                  let record = self.transferRecords.first(where: { $0.id == id }),
+                  record.canRetry else { return }
+            self.retryTransfer(id: id)
+        }
     }
 
     private func persistRetrySource(fileURL: URL, id: String) -> URL? {

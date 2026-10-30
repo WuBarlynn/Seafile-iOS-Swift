@@ -25,7 +25,7 @@ committed.
 
 No GitHub Release or prebuilt IPA is published from this repository.
 
-The current version is **1.0.1**. The rewrite is versioned independently from
+The current version is **1.0.2**. The rewrite is versioned independently from
 the upstream Seafile iOS client.
 
 ## Requirements
@@ -142,16 +142,19 @@ sidebar/detail layout on iPad.
 
 The share extension can create a folder at the upload destination and offers
 Recent and Starred shortcuts, and the File Provider serves server-side
-thumbnails for images. PDF previews can be marked up
-with Quick Look and the edited copy is uploaded as a new version. The app
-registers the `seafile://` scheme and handles files opened with "Open in
-Seafile" by uploading them to the folder currently shown. Audio and video can
-keep playing in the background.
+thumbnails for images and keeps Files favorite ranks, tags and last-used dates.
+PDF previews can be marked up with Quick Look and the edited copy is uploaded
+as a new version, and every file has a read-only Properties sheet. Batch
+selection supports starring and offline downloads. The app registers the
+`seafile://` scheme and handles files opened with "Open in Seafile" by uploading
+them to the folder currently shown. Audio and video can keep playing in the
+background.
 
 Known gaps compared with the upstream client: WeChat sharing (needs the WeChat
-SDK), File Provider trash browsing, and editing of SeaDoc geolocation metadata
-(read-only, matching upstream). Check the source and commit history for
-details.
+SDK and an app registration), and editing of SeaDoc geolocation metadata
+(read-only, matching upstream). The File Provider exposes no trash because the
+upstream provider deliberately reports that feature as unsupported. Check the
+source and commit history for details.
 
 ## License
 

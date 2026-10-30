@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "サーバーから予期しない応答が返されました。";
 "Server error (HTTP %lld)." = "サーバーエラー（HTTP %lld）。";
 "The server did not provide an upload link." = "サーバーからアップロードリンクが提供されませんでした。";
+"New Folder" = "新規フォルダ";
+"Folder name" = "フォルダ名";
+"Create" = "作成";

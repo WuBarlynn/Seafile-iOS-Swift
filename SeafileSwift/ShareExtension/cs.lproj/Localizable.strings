@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "Server vrátil neočekávanou odpověď.";
 "Server error (HTTP %lld)." = "Chyba serveru (HTTP %lld).";
 "The server did not provide an upload link." = "Server neposkytl odkaz pro nahrání.";
+"New Folder" = "Nová složka";
+"Folder name" = "Název složky";
+"Create" = "Vytvořit";

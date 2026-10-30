@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ShareRootView: View {
     let model: ShareModel
+    @State private var showNewFolder = false
+    @State private var newFolderName = ""
 
     var body: some View {
         NavigationStack {
@@ -12,6 +14,15 @@ struct ShareRootView: View {
                 .safeAreaInset(edge: .bottom, spacing: 0) { bottomBar }
         }
         .tint(.orange)
+        .alert("New Folder", isPresented: $showNewFolder) {
+            TextField("Folder name", text: $newFolderName)
+            Button("Create") {
+                let name = newFolderName
+                newFolderName = ""
+                Task { _ = await model.createFolder(named: name) }
+            }
+            Button("Cancel", role: .cancel) { newFolderName = "" }
+        }
     }
 
     @ViewBuilder
@@ -48,6 +59,17 @@ struct ShareRootView: View {
                     .accessibilityLabel("Back")
                 }
                 Button("Cancel") { model.onCancel() }
+            }
+        }
+        ToolbarItem(placement: .topBarTrailing) {
+            if model.currentRepo != nil, model.uploadedCount == nil {
+                Button {
+                    newFolderName = ""
+                    showNewFolder = true
+                } label: {
+                    Image(systemName: "folder.badge.plus")
+                }
+                .accessibilityLabel("New Folder")
             }
         }
         ToolbarItem(placement: .topBarTrailing) {

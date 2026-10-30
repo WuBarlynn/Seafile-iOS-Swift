@@ -138,6 +138,21 @@ final class ShareModel {
         }
     }
 
+    func createFolder(named name: String) async -> Bool {
+        guard let account, let repo = currentRepo else { return false }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        do {
+            let client = ShareAPIClient(account: account)
+            try await client.createDirectory(repoID: repo.id, path: currentPath, name: trimmed)
+            await loadDirectories()
+            return true
+        } catch {
+            errorText = error.localizedDescription
+            return false
+        }
+    }
+
     func upload() async {
         guard !isUploading,
               !items.isEmpty,

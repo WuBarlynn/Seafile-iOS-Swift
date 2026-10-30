@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "El servidor ha retornat una resposta inesperada.";
 "Server error (HTTP %lld)." = "Error del servidor (HTTP %lld).";
 "The server did not provide an upload link." = "El servidor no ha proporcionat cap enllaç de pujada.";
+"New Folder" = "Carpeta nova";
+"Folder name" = "Nom de la carpeta";
+"Create" = "Crea";

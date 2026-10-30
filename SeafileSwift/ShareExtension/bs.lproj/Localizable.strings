@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "Server je vratio neočekivan odgovor.";
 "Server error (HTTP %lld)." = "Greška servera (HTTP %lld).";
 "The server did not provide an upload link." = "Server nije pružio link za otpremanje.";
+"New Folder" = "Nova fascikla";
+"Folder name" = "Naziv fascikle";
+"Create" = "Kreiraj";

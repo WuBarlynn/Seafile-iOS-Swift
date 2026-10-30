@@ -68,6 +68,13 @@ final class FileProviderAPI: NSObject, URLSessionDelegate, @unchecked Sendable {
         return entries.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
+    func thumbnail(repoID: String, path: String, size: Int) async throws -> Data? {
+        let data = try await get("api2/repos/\(repoID)/thumbnail/",
+                                 query: [URLQueryItem(name: "p", value: path),
+                                         URLQueryItem(name: "size", value: "\(size)")])
+        return data.isEmpty ? nil : data
+    }
+
     func downloadLink(repoID: String, path: String) async throws -> URL {
         let data = try await get("api2/repos/\(repoID)/file/",
                                  query: [URLQueryItem(name: "p", value: path),

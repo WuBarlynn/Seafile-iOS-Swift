@@ -2,7 +2,7 @@ import FileProvider
 import Foundation
 import UniformTypeIdentifiers
 
-final class SeafileFileProvider: NSObject, NSFileProviderReplicatedExtension {
+final class SeafileFileProvider: NSObject, NSFileProviderReplicatedExtension, NSFileProviderThumbnailing {
     let domain: NSFileProviderDomain
     private let account: SharedAccount?
     private let api: FileProviderAPI?
@@ -213,6 +213,42 @@ final class SeafileFileProvider: NSObject, NSFileProviderReplicatedExtension {
                     request: NSFileProviderRequest) throws -> NSFileProviderEnumerator {
         guard let api else { throw FPEnumerator.map(FPAPIError.invalidServer) }
         return FPEnumerator(container: containerItemIdentifier, api: api)
+    }
+
+    func fetchThumbnails(for itemIdentifiers: [NSFileProviderItemIdentifier],
+                         requestedSize size: CGSize,
+                         perThumbnailCompletionHandler: @escaping (NSFileProviderItemIdentifier, Data?, Error?) -> Void,
+                         completionHandler: @escaping (Error?) -> Void) -> Progress {
+        let progress = Progress(totalUnitCount: Int64(itemIdentifiers.count))
+        guard !itemIdentifiers.isEmpty else {
+            completionHandler(nil)
+            return progress
+        }
+        let side = min(max(Int(max(size.width, size.height)), 64), 512)
+        Task {
+            for identifier in itemIdentifiers {
+                if progress.isCancelled { break }
+                defer { progress.completedUnitCount += 1 }
+                guard let api,
+                      let decoded = FPIdentifier.decode(identifier),
+                      !decoded.path.isEmpty,
+                      let type = UTType(filenameExtension: (decoded.path as NSString).pathExtension),
+                      type.conforms(to: .image) else {
+                    perThumbnailCompletionHandler(identifier, nil, nil)
+                    continue
+                }
+                do {
+                    let data = try await api.thumbnail(repoID: decoded.repoID,
+                                                      path: decoded.path,
+                                                      size: side)
+                    perThumbnailCompletionHandler(identifier, data, nil)
+                } catch {
+                    perThumbnailCompletionHandler(identifier, nil, nil)
+                }
+            }
+            completionHandler(nil)
+        }
+        return progress
     }
 
     // MARK: - Helpers

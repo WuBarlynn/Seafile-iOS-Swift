@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "Сервер вернул неожиданный ответ.";
 "Server error (HTTP %lld)." = "Ошибка сервера (HTTP %lld).";
 "The server did not provide an upload link." = "Сервер не предоставил ссылку для загрузки.";
+"New Folder" = "Новая папка";
+"Folder name" = "Название папки";
+"Create" = "Создать";

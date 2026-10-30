@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "Serveren returnerte et uventet svar.";
 "Server error (HTTP %lld)." = "Serverfeil (HTTP %lld).";
 "The server did not provide an upload link." = "Serveren ga ingen opplastingslenke.";
+"New Folder" = "Ny mappe";
+"Folder name" = "Mappenavn";
+"Create" = "Opprett";

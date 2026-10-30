@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "أعاد الخادم استجابة غير متوقعة.";
 "Server error (HTTP %lld)." = "خطأ في الخادم (HTTP %lld).";
 "The server did not provide an upload link." = "لم يوفّر الخادم رابط رفع.";
+"New Folder" = "مجلد جديد";
+"Folder name" = "اسم المجلد";
+"Create" = "إنشاء";

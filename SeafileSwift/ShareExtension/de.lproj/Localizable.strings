@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "Der Server hat eine unerwartete Antwort zurückgegeben.";
 "Server error (HTTP %lld)." = "Serverfehler (HTTP %lld).";
 "The server did not provide an upload link." = "Der Server hat keinen Upload-Link bereitgestellt.";
+"New Folder" = "Neuer Ordner";
+"Folder name" = "Ordnername";
+"Create" = "Erstellen";

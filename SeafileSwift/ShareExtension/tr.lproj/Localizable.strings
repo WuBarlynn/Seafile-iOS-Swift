@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "Sunucu beklenmeyen bir yanıt döndürdü.";
 "Server error (HTTP %lld)." = "Sunucu hatası (HTTP %lld).";
 "The server did not provide an upload link." = "Sunucu bir yükleme bağlantısı sağlamadı.";
+"New Folder" = "Yeni Klasör";
+"Folder name" = "Klasör adı";
+"Create" = "Oluştur";

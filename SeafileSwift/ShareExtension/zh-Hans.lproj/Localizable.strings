@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "服务器返回了意外的响应。";
 "Server error (HTTP %lld)." = "服务器错误（HTTP %lld）。";
 "The server did not provide an upload link." = "服务器未提供上传链接。";
+"New Folder" = "新建文件夹";
+"Folder name" = "文件夹名称";
+"Create" = "创建";

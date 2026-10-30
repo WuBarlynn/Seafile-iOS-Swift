@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "伺服器傳回了非預期的回應。";
 "Server error (HTTP %lld)." = "伺服器錯誤（HTTP %lld）。";
 "The server did not provide an upload link." = "伺服器未提供上傳連結。";
+"New Folder" = "新增資料夾";
+"Folder name" = "資料夾名稱";
+"Create" = "建立";

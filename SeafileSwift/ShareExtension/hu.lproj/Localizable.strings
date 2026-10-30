@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "A kiszolgáló váratlan választ adott.";
 "Server error (HTTP %lld)." = "Kiszolgálóhiba (HTTP %lld).";
 "The server did not provide an upload link." = "A kiszolgáló nem adott feltöltési hivatkozást.";
+"New Folder" = "Új mappa";
+"Folder name" = "Mappa neve";
+"Create" = "Létrehozás";

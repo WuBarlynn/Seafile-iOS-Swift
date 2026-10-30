@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "Þjónninn svaraði óvænt.";
 "Server error (HTTP %lld)." = "Villa á þjóni (HTTP %lld).";
 "The server did not provide an upload link." = "Þjónninn gaf ekki upphleðsluhlekk.";
+"New Folder" = "Ný mappa";
+"Folder name" = "Heiti möppu";
+"Create" = "Búa til";

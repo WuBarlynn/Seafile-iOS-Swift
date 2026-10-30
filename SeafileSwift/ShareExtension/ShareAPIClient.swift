@@ -76,6 +76,28 @@ final class ShareAPIClient: NSObject, URLSessionTaskDelegate, @unchecked Sendabl
         }
     }
 
+    func createDirectory(repoID: String, path: String, name: String) async throws {
+        guard let url = makeURL("api2/repos/\(repoID)/dir/",
+                                query: [URLQueryItem(name: "p", value: path)]) else {
+            throw ShareAPIError.invalidServer
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Token \(account.token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        var form = URLComponents()
+        form.queryItems = [URLQueryItem(name: "operation", value: "mkdir"),
+                           URLQueryItem(name: "name", value: name)]
+        request.httpBody = Data((form.percentEncodedQuery ?? "").utf8)
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw ShareAPIError.invalidResponse
+        }
+        guard (200...299).contains(http.statusCode) else {
+            throw ShareAPIError.http(http.statusCode, Self.errorMessage(from: data))
+        }
+    }
+
     func upload(fileURL: URL,
                 fileName: String,
                 repoID: String,

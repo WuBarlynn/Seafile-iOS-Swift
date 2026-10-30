@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "Serveris grąžino netikėtą atsakymą.";
 "Server error (HTTP %lld)." = "Serverio klaida (HTTP %lld).";
 "The server did not provide an upload link." = "Serveris nepateikė įkėlimo nuorodos.";
+"New Folder" = "Naujas aplankas";
+"Folder name" = "Aplanko pavadinimas";
+"Create" = "Sukurti";

@@ -24,3 +24,6 @@
 "The server returned an unexpected response." = "서버가 예기치 않은 응답을 반환했습니다.";
 "Server error (HTTP %lld)." = "서버 오류(HTTP %lld).";
 "The server did not provide an upload link." = "서버가 업로드 링크를 제공하지 않았습니다.";
+"New Folder" = "새 폴더";
+"Folder name" = "폴더 이름";
+"Create" = "생성";

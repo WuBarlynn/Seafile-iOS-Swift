@@ -73,6 +73,12 @@ struct PhotoGalleryScreen: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
+        .overlay(alignment: .bottom) {
+            if chromeVisible {
+                GalleryThumbnailStrip(request: request, index: $index)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
         .animation(.smooth(duration: 0.22), value: chromeVisible)
         .onAppear { scheduleHide() }
         .onDisappear { hideTask?.cancel() }
@@ -374,6 +380,89 @@ struct PhotoGalleryScreen: View {
             try? await Task.sleep(for: .seconds(3))
             guard !Task.isCancelled else { return }
             withAnimation(.smooth(duration: 0.22)) { chromeVisible = false }
+        }
+    }
+}
+
+private struct GalleryThumbnailStrip: View {
+    let request: PhotoGalleryRequest
+    @Binding var index: Int
+
+    var body: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 8) {
+                    ForEach(request.targets.indices, id: \.self) { itemIndex in
+                        Button {
+                            index = itemIndex
+                        } label: {
+                            GalleryThumbnailCell(target: request.targets[itemIndex],
+                                                 isCurrent: itemIndex == index)
+                        }
+                        .buttonStyle(.plain)
+                        .id(itemIndex)
+                        .accessibilityLabel(request.targets[itemIndex].name)
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+            .frame(height: 64)
+            .background(.bar)
+            .overlay(alignment: .top) {
+                Divider()
+            }
+            .onAppear {
+                proxy.scrollTo(index, anchor: .center)
+            }
+            .onChange(of: index) { _, newValue in
+                withAnimation(.smooth(duration: 0.2)) {
+                    proxy.scrollTo(newValue, anchor: .center)
+                }
+            }
+        }
+    }
+}
+
+private struct GalleryThumbnailCell: View {
+    let target: PreviewTarget
+    let isCurrent: Bool
+
+    @Environment(Session.self) private var session
+    @State private var image: UIImage?
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(Color.primary.opacity(0.08))
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Image(systemName: "photo")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(width: 50, height: 50)
+        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .strokeBorder(isCurrent ? Color.seafileOrange : Color.clear, lineWidth: 2)
+        }
+        .opacity(isCurrent ? 1 : 0.7)
+        .task(id: target.id) {
+            if target.repo.encrypted {
+                image = await session.thumbnails.localImage(repoID: target.repo.id,
+                                                            path: target.path,
+                                                            name: target.name,
+                                                            version: target.version,
+                                                            size: 128)
+            } else {
+                image = await session.thumbnails.image(repoID: target.repo.id,
+                                                       path: target.path,
+                                                       size: 128)
+            }
         }
     }
 }

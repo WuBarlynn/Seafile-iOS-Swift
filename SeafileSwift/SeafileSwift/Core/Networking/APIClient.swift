@@ -18,7 +18,7 @@ struct SSOSession: Sendable {
 }
 
 final class APIClient: @unchecked Sendable {
-    static let appVersion = "0.9.0"
+    static let appVersion = "1.0.0"
     private static let csrfToken = "n8ba38951c9ba66418311a25195e2e380"
 
     static var platformVersion: String {

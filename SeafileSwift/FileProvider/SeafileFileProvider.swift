@@ -38,7 +38,7 @@ final class SeafileFileProvider: NSObject, NSFileProviderReplicatedExtension, NS
                     completionHandler(nil, FPEnumerator.noSuchItemError)
                     return
                 }
-                completionHandler(item, nil)
+                completionHandler(FPDecorationStore.shared.apply(to: item), nil)
             } catch {
                 completionHandler(nil, FPEnumerator.map(error))
             }
@@ -128,6 +128,20 @@ final class SeafileFileProvider: NSObject, NSFileProviderReplicatedExtension, NS
             guard let api, let decoded = FPIdentifier.decode(item.itemIdentifier) else {
                 completionHandler(nil, [], false, FPEnumerator.noSuchItemError)
                 return
+            }
+            let decorationFields: NSFileProviderItemFields = [.favoriteRank, .tagData, .lastUsedDate]
+            if !changedFields.intersection(decorationFields).isEmpty {
+                FPDecorationStore.shared.update(from: item,
+                                                fields: changedFields,
+                                                identifier: item.itemIdentifier)
+                if changedFields.subtracting(decorationFields).isEmpty {
+                    if let current = try? await loadItem(item.itemIdentifier, api: api) {
+                        completionHandler(FPDecorationStore.shared.apply(to: current), [], false, nil)
+                    } else {
+                        completionHandler(nil, [], false, FPEnumerator.noSuchItemError)
+                    }
+                    return
+                }
             }
             let newParent = FPIdentifier.decode(item.parentItemIdentifier)
             let newDirectory = newParent?.path ?? FPIdentifier.parentPath(decoded.path)

@@ -36,6 +36,7 @@ struct PreviewScreen: View {
     @State private var officePendingAction: OfficeFileAction?
     @State private var showFileInfo = false
     @State private var showDeleteConfirm = false
+    @State private var showProperties = false
     @State private var markupRequest: MarkupRequest?
     @State private var isSavingToPhotos = false
     @State private var livePhoto = MotionPhotoPlaybackController()
@@ -166,6 +167,11 @@ struct PreviewScreen: View {
         }
         .sheet(isPresented: $showFileInfo) {
             FileInfoSheet(target: target)
+        }
+        .sheet(isPresented: $showProperties) {
+            SDocPropertiesSheet(repoID: target.repo.id,
+                                path: target.path,
+                                api: session.api)
         }
         .confirmationDialog("Delete “\(target.name)”?",
                             isPresented: $showDeleteConfirm,
@@ -322,6 +328,12 @@ struct PreviewScreen: View {
             } label: {
                 Label("Edit", systemImage: "pencil.tip.crop.circle")
             }
+        }
+
+        Button {
+            showProperties = true
+        } label: {
+            Label("Properties", systemImage: "list.bullet.rectangle")
         }
 
         if !target.repo.isReadOnly {

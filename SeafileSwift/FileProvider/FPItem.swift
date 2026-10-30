@@ -20,6 +20,9 @@ final class FPItem: NSObject, NSFileProviderItem {
     let isShared: Bool
     let isTrashed: Bool
     let childItemCount: NSNumber?
+    var favoriteRank: NSNumber?
+    var tagData: Data?
+    var lastUsedDate: Date?
 
     init(itemIdentifier: NSFileProviderItemIdentifier,
          parentItemIdentifier: NSFileProviderItemIdentifier,

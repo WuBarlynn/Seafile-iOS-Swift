@@ -62,6 +62,7 @@ struct FolderView: View {
     @State private var batchShareItem: BatchShareItem?
     @State private var isPreparingBatch = false
     @State private var mailRequest: MailRequest?
+    @State private var profileTarget: Dirent?
 
     @State private var isSelecting = false
     @State private var selectedPaths: Set<String> = []
@@ -281,6 +282,9 @@ struct FolderView: View {
                 mailRequest = nil
             }
         }
+        .sheet(item: $profileTarget) { dirent in
+            SDocPropertiesSheet(repoID: repo.id, path: dirent.path, api: session.api)
+        }
         .seafileToast($toast)
     }
 
@@ -350,6 +354,12 @@ struct FolderView: View {
                     Label(allSelectionStarred ? "Remove Star" : "Star",
                           systemImage: allSelectionStarred ? "star.slash" : "star")
                 }
+                Button {
+                    downloadSelection()
+                } label: {
+                    Label("Download for Offline", systemImage: "arrow.down.circle")
+                }
+                .disabled(session.offlineDownloads.isDownloading)
             } label: {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: 17, weight: .semibold))
@@ -581,6 +591,11 @@ struct FolderView: View {
                 downloadAndShare(dirent)
             } label: {
                 Label("Save and Share…", systemImage: "square.and.arrow.down")
+            }
+            Button {
+                profileTarget = dirent
+            } label: {
+                Label("Properties", systemImage: "list.bullet.rectangle")
             }
         } else {
             Button {
@@ -1026,6 +1041,26 @@ struct FolderView: View {
             } catch {
                 toast = error.localizedDescription
             }
+        }
+    }
+
+    private func downloadSelection() {
+        let targets = selectedItems
+        guard !targets.isEmpty else { return }
+        if repo.encrypted && !session.isRepoUnlocked(repo.id) {
+            toast = String(localized: "Unlock the library before downloading it for offline use.")
+            return
+        }
+        Task {
+            for item in targets {
+                while session.offlineDownloads.isDownloading {
+                    try? await Task.sleep(nanoseconds: 300_000_000)
+                }
+                guard session.offlineDownloads.download(repoID: repo.id,
+                                                        path: item.path,
+                                                        title: item.name) else { break }
+            }
+            isSelecting = false
         }
     }
 

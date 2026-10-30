@@ -23,13 +23,13 @@ final class FPEnumerator: NSObject, NSFileProviderEnumerator {
                 }
                 if container == .rootContainer {
                     let repos = try await api.repos().filter { !$0.isEncrypted }
-                    observer.didEnumerate(repos.map(FPItem.repo))
+                    observer.didEnumerate(repos.map { FPDecorationStore.shared.apply(to: FPItem.repo($0)) })
                 } else if let decoded = FPIdentifier.decode(container) {
                     let entries = try await api.dirents(repoID: decoded.repoID, path: decoded.path)
                     observer.didEnumerate(entries.map {
-                        FPItem.dirent(repoID: decoded.repoID,
-                                      parentPath: decoded.path,
-                                      entry: $0)
+                        FPDecorationStore.shared.apply(to: FPItem.dirent(repoID: decoded.repoID,
+                                                                         parentPath: decoded.path,
+                                                                         entry: $0))
                     })
                 } else {
                     observer.finishEnumeratingWithError(Self.noSuchItemError)

@@ -147,6 +147,7 @@ struct FolderView: View {
     private func withInteractionHandlers<V: View>(_ view: V) -> some View {
         view
         .task {
+            session.currentFolder = FolderLocation(repoID: repo.id, repoName: repo.name, path: path)
             rememberRepoPassword = settings.rememberRepoPasswords
             if repo.encrypted {
                 isCheckingEncrypted = true

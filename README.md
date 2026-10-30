@@ -140,14 +140,17 @@ a share extension, and a File Provider extension for the Files app. The
 interface is localized into 21 languages and the Libraries tab uses a
 sidebar/detail layout on iPad.
 
-The share extension can create a folder at the upload destination and the File
-Provider serves server-side thumbnails for images.
+The share extension can create a folder at the upload destination, and the File
+Provider serves server-side thumbnails for images. PDF previews can be marked up
+with Quick Look and the edited copy is uploaded as a new version. The app
+registers the `seafile://` scheme and handles files opened with "Open in
+Seafile" by uploading them to the folder currently shown. Audio and video can
+keep playing in the background.
 
 Known gaps compared with the upstream client: WeChat sharing (needs the WeChat
-SDK), PDF markup saved as a new version, opening external files with "Open in
-Seafile", File Provider trash browsing, Starred/Recent tabs in the share
-extension, and editing of SeaDoc geolocation metadata (read-only, matching
-upstream). Check the source and commit history for details.
+SDK), File Provider trash browsing, Starred/Recent tabs in the share extension,
+and editing of SeaDoc geolocation metadata (read-only, matching upstream).
+Check the source and commit history for details.
 
 ## License
 

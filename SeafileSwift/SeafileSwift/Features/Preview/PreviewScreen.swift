@@ -36,6 +36,7 @@ struct PreviewScreen: View {
     @State private var officePendingAction: OfficeFileAction?
     @State private var showFileInfo = false
     @State private var showDeleteConfirm = false
+    @State private var markupRequest: MarkupRequest?
     @State private var isSavingToPhotos = false
     @State private var livePhoto = MotionPhotoPlaybackController()
 
@@ -174,6 +175,16 @@ struct PreviewScreen: View {
         } message: {
             Text("This action cannot be undone.")
         }
+        .fullScreenCover(item: $markupRequest) { request in
+            QuickLookEditor(url: request.url,
+                            onEdited: { editedURL in
+                                uploadEditedCopy(editedURL)
+                            },
+                            onClose: {
+                                markupRequest = nil
+                            })
+            .ignoresSafeArea()
+        }
         .seafileToast($toast)
     }
 
@@ -305,6 +316,14 @@ struct PreviewScreen: View {
             .disabled(isSavingToPhotos)
         }
 
+        if kind == .pdf, !target.repo.isReadOnly, let localURL {
+            Button {
+                markupRequest = MarkupRequest(url: localURL)
+            } label: {
+                Label("Edit", systemImage: "pencil.tip.crop.circle")
+            }
+        }
+
         if !target.repo.isReadOnly {
             Button(role: .destructive) {
                 showDeleteConfirm = true
@@ -356,6 +375,23 @@ struct PreviewScreen: View {
                                                                   options: nil)
                 }
                 toast = String(localized: "Saved to Photos.")
+            } catch {
+                toast = error.localizedDescription
+            }
+        }
+    }
+
+    private func uploadEditedCopy(_ url: URL) {
+        let dir = (target.path as NSString).deletingLastPathComponent
+        Task {
+            do {
+                _ = try await session.transfers.upload(fileURL: url,
+                                                       fileName: target.name,
+                                                       repoID: target.repo.id,
+                                                       dirPath: dir.isEmpty ? "/" : dir,
+                                                       replace: true)
+                toast = String(localized: "Saved.")
+                onFileChanged?()
             } catch {
                 toast = error.localizedDescription
             }

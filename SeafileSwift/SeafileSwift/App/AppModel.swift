@@ -25,6 +25,7 @@ final class AppModel {
 
     var toastMessage: String?
     var pendingDeepLink: DeepLinkTarget?
+    var pendingImportURL: URL?
 
     private let store = AccountStore.shared
     private var didBootstrap = false
@@ -167,6 +168,16 @@ final class AppModel {
     }
 
     func handleIncomingURL(_ url: URL) {
+        if url.isFileURL {
+            let accessing = url.startAccessingSecurityScopedResource()
+            defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+            let destination = FileManager.default.temporaryDirectory
+                .appendingPathComponent("import-\(UUID().uuidString)-\(url.lastPathComponent)")
+            if (try? FileManager.default.copyItem(at: url, to: destination)) != nil {
+                pendingImportURL = destination
+            }
+            return
+        }
         guard url.scheme?.lowercased() == "seafile" else { return }
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         guard let repoID = items.first(where: { $0.name == "repo_id" })?.value, !repoID.isEmpty,

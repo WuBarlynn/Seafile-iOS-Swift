@@ -1,6 +1,12 @@
 import Foundation
 import Observation
 
+struct FolderLocation: Equatable {
+    let repoID: String
+    let repoName: String
+    let path: String
+}
+
 @MainActor
 @Observable
 final class Session {
@@ -18,6 +24,7 @@ final class Session {
     private(set) var serverInfo: ServerInfo?
     private(set) var accountInfo: AccountInfo?
     private(set) var repositories: [Repository] = []
+    var currentFolder: FolderLocation?
     var isLoadingLibraries = false
     var librariesError: String?
 

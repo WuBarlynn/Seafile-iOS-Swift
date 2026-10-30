@@ -69,5 +69,36 @@ struct MainView: View {
                 selection = .libraries
             }
         }
+        .task {
+            await importPendingFile()
+        }
+        .onChange(of: app.pendingImportURL) { _, _ in
+            Task { await importPendingFile() }
+        }
+    }
+
+    private func importPendingFile() async {
+        guard let url = app.pendingImportURL else { return }
+        app.pendingImportURL = nil
+        let destination = session.currentFolder
+            ?? session.repositories.first(where: { !$0.isReadOnly && !$0.encrypted })
+                .map { FolderLocation(repoID: $0.id, repoName: $0.name, path: "/") }
+        guard let destination else {
+            app.toastMessage = String(localized: "Create or join a writable library first.")
+            try? FileManager.default.removeItem(at: url)
+            return
+        }
+        let name = url.lastPathComponent
+        do {
+            _ = try await session.transfers.upload(fileURL: url,
+                                                   fileName: name,
+                                                   repoID: destination.repoID,
+                                                   dirPath: destination.path)
+            app.toastMessage = String(format: String(localized: "Uploaded %@."), name)
+            selection = .libraries
+        } catch {
+            app.toastMessage = error.localizedDescription
+        }
+        try? FileManager.default.removeItem(at: url)
     }
 }

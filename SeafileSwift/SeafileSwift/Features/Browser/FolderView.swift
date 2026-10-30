@@ -30,6 +30,7 @@ struct FolderView: View {
     @State private var previewTarget: PreviewTarget?
     @State private var galleryRequest: PhotoGalleryRequest?
     @State private var shareItem: ShareItem?
+    @Namespace private var photoZoom
     @State private var webRequest: WebScreenRequest?
 
     @State private var unlockPassword = ""
@@ -223,6 +224,8 @@ struct FolderView: View {
         }
         .fullScreenCover(item: $galleryRequest) { request in
             PhotoGalleryScreen(request: request)
+                .navigationTransition(.zoom(sourceID: request.targets[request.startIndex].path,
+                                             in: photoZoom))
         }
         .fullScreenCover(item: $webRequest) { request in
             if request.isSDoc, let repoID = request.repoID, let path = request.path {
@@ -438,6 +441,7 @@ struct FolderView: View {
                         DirentGridCell(dirent: dirent, repo: repo)
                     }
                     .buttonStyle(.plain)
+                    .matchedTransitionSource(id: dirent.path, in: photoZoom)
                     .contextMenu { contextMenu(for: dirent) }
                 }
             }
@@ -472,6 +476,7 @@ struct FolderView: View {
                 DirentRow(dirent: dirent, repo: repo)
             }
             .buttonStyle(.plain)
+            .matchedTransitionSource(id: dirent.path, in: photoZoom)
             .contextMenu { contextMenu(for: dirent) }
         }
     }

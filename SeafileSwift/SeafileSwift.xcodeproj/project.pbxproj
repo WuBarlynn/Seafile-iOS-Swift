@@ -24,15 +24,27 @@
 			dstSubfolderSpec = 13;
 			files = (
 				B2000000000000000000000E /* ShareExtension.appex in Embed App Extensions */,
+				C3000000000000000000000E /* FileProvider.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
+/* Begin PBXContainerItemProxy section */
+		C3000000000000000000000C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A10000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C30000000000000000000007;
+			remoteInfo = FileProvider;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		A10000000000000000000005 /* SeafileSwift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeafileSwift.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B20000000000000000000001 /* ShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C30000000000000000000001 /* FileProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FileProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -49,6 +61,11 @@
 		B20000000000000000000003 /* Shared */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Shared;
+			sourceTree = "<group>";
+		};
+		C30000000000000000000002 /* FileProvider */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = FileProvider;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -70,6 +87,7 @@
 				A1000000000000000000000F /* SeafileSwift */,
 				B20000000000000000000003 /* Shared */,
 				B20000000000000000000002 /* ShareExtension */,
+				C30000000000000000000002 /* FileProvider */,
 				A10000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -79,6 +97,7 @@
 			children = (
 				A10000000000000000000005 /* SeafileSwift.app */,
 				B20000000000000000000001 /* ShareExtension.appex */,
+				C30000000000000000000001 /* FileProvider.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -99,6 +118,7 @@
 			);
 			dependencies = (
 				B2000000000000000000000B /* PBXTargetDependency */,
+				C3000000000000000000000B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A1000000000000000000000F /* SeafileSwift */,
@@ -134,6 +154,29 @@
 			productReference = B20000000000000000000001 /* ShareExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		C30000000000000000000007 /* FileProvider */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C3000000000000000000000A /* Build configuration list for PBXNativeTarget "FileProvider" */;
+			buildPhases = (
+				C30000000000000000000004 /* Sources */,
+				C30000000000000000000005 /* Frameworks */,
+				C30000000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B20000000000000000000003 /* Shared */,
+				C30000000000000000000002 /* FileProvider */,
+			);
+			name = FileProvider;
+			packageProductDependencies = (
+			);
+			productName = FileProvider;
+			productReference = C30000000000000000000001 /* FileProvider.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -148,6 +191,9 @@
 						CreatedOnToolsVersion = 26.0;
 					};
 					B20000000000000000000007 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					C30000000000000000000007 = {
 						CreatedOnToolsVersion = 26.0;
 					};
 				};
@@ -170,6 +216,7 @@
 			targets = (
 				A10000000000000000000004 /* SeafileSwift */,
 				B20000000000000000000007 /* ShareExtension */,
+				C30000000000000000000007 /* FileProvider */,
 			);
 		};
 /* End PBXProject section */
@@ -229,6 +276,44 @@
 			isa = PBXTargetDependency;
 			target = B20000000000000000000007 /* ShareExtension */;
 			targetProxy = B2000000000000000000000C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C30000000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C30000000000000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C30000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C3000000000000000000000B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C30000000000000000000007 /* FileProvider */;
+			targetProxy = C3000000000000000000000C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -457,6 +542,61 @@
 			};
 			name = Release;
 		};
+		C30000000000000000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/FileProvider.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/FileProvider-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.9.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafileSwift.FileProvider;
+				PRODUCT_MODULE_NAME = SeafileFileProvider;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C30000000000000000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/FileProvider.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/FileProvider-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.9.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.seafile.seafileSwift.FileProvider;
+				PRODUCT_MODULE_NAME = SeafileFileProvider;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -483,6 +623,15 @@
 			buildConfigurations = (
 				B20000000000000000000008 /* Debug */,
 				B20000000000000000000009 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C3000000000000000000000A /* Build configuration list for PBXNativeTarget "FileProvider" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C30000000000000000000008 /* Debug */,
+				C30000000000000000000009 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

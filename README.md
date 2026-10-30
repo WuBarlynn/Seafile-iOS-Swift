@@ -103,13 +103,38 @@ zip -qry SeafileSwift-unsigned.ipa Payload
 Sign the resulting app/IPA with your own provisioning profile before installing
 it on a device. Do not commit generated `.app`, `.ipa`, or signing files.
 
+### App Group and app extensions
+
+The project contains three targets: the app, `ShareExtension` (share sheet
+upload) and `FileProvider` (Files app integration). All three use the App Group
+`group.com.seafile.seafileSwift` to share the signed-in accounts:
+
+- `Config/SeafileSwift.entitlements`
+- `Config/ShareExtension.entitlements`
+- `Config/FileProvider.entitlements`
+
+When signing manually, register the App Group for all three bundle identifiers
+in your provisioning profile and sign each extension with its own entitlements.
+The File Provider domain is created by the app on login, so the Files app shows
+one location per signed-in account once the extension is installed.
+
+Because `CODE_SIGNING_ALLOWED=NO` skips the *Embed App Extensions* phase, the
+extension bundles must be copied into the app when packaging by hand:
+
+```bash
+mkdir -p Payload/SeafileSwift.app/PlugIns
+cp -R build-device/Build/Products/Release-iphoneos/*.appex Payload/SeafileSwift.app/PlugIns/
+```
+
 ## Implemented areas
 
 The rewrite includes account and SSO login, multi-account switching, library
 browsing, copy/move/delete, previews, Markdown/Python editing, SeaDoc editing
 and comments, online Office, Wiki, search, starred items, activities, settings,
-local encrypted-library decryption, camera/photo upload, photo backup,
-offline downloads, transfer management, and client-certificate authentication.
+local encrypted-library decryption, camera/photo upload, Live Photo upload and
+playback, photo backup, offline downloads, transfer management,
+client-certificate authentication, a share extension, and a File Provider
+extension for the Files app.
 
 Some upstream features and extensions are still in progress; check the source
 and commit history for the current state.

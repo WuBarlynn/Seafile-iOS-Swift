@@ -26,6 +26,9 @@ struct PhotoGalleryScreen: View {
     @State private var exportURL: URL?
     @State private var isPreparingExport = false
     @State private var showDocumentExport = false
+    @State private var isImageZoomed = false
+    @State private var dragOffset: CGFloat = 0
+    @State private var dragScale: CGFloat = 1
     @State private var toast: String?
 
     init(request: PhotoGalleryRequest) {
@@ -40,19 +43,29 @@ struct PhotoGalleryScreen: View {
 
     var body: some View {
         ZStack {
-            Color(.systemBackground).ignoresSafeArea()
+            Color(.systemBackground)
+                .opacity(max(0.35, 1 - Double(dragOffset) / 900))
+                .ignoresSafeArea()
 
             TabView(selection: $index) {
                 ForEach(Array(request.targets.enumerated()), id: \.element.id) { offset, target in
                     GalleryImagePage(target: target,
                                      isActive: abs(offset - index) <= 1,
                                      onTap: toggleChrome,
-                                     onInteraction: scheduleHide)
+                                     onInteraction: scheduleHide,
+                                     onZoomChanged: { zoomed in
+                                         if offset == index {
+                                             isImageZoomed = zoomed
+                                         }
+                                     })
                         .tag(offset)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .ignoresSafeArea()
+            .offset(y: dragOffset)
+            .scaleEffect(dragScale)
+            .simultaneousGesture(dismissGesture)
         }
         .overlay(alignment: .top) {
             if chromeVisible {
@@ -64,6 +77,9 @@ struct PhotoGalleryScreen: View {
         .onAppear { scheduleHide() }
         .onDisappear { hideTask?.cancel() }
         .onChange(of: index) { _, _ in
+            isImageZoomed = false
+            dragOffset = 0
+            dragScale = 1
             showChrome(autoHide: true)
         }
         .sheet(item: $shareItem) { item in
@@ -90,6 +106,40 @@ struct PhotoGalleryScreen: View {
             Text("This action cannot be undone.")
         }
         .seafileToast($toast)
+    }
+
+    private var dismissGesture: some Gesture {
+        DragGesture(minimumDistance: 20)
+            .onChanged { value in
+                guard !isImageZoomed else { return }
+                let vertical = value.translation.height
+                let horizontal = value.translation.width
+                guard vertical > 0, abs(vertical) > abs(horizontal) * 1.4 else { return }
+                dragOffset = vertical
+                dragScale = max(0.82, 1 - vertical / 1600)
+                chromeVisible = false
+            }
+            .onEnded { value in
+                guard !isImageZoomed else {
+                    resetDrag()
+                    return
+                }
+                let shouldDismiss = value.translation.height > 140
+                    || value.predictedEndTranslation.height > 360
+                if shouldDismiss {
+                    dismiss()
+                } else {
+                    resetDrag()
+                    showChrome(autoHide: true)
+                }
+            }
+    }
+
+    private func resetDrag() {
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
+            dragOffset = 0
+            dragScale = 1
+        }
     }
 
     private var topChrome: some View {
@@ -333,6 +383,7 @@ private struct GalleryImagePage: View {
     let isActive: Bool
     let onTap: () -> Void
     let onInteraction: () -> Void
+    let onZoomChanged: (Bool) -> Void
 
     @Environment(Session.self) private var session
     @State private var image: UIImage?
@@ -345,7 +396,10 @@ private struct GalleryImagePage: View {
     var body: some View {
         ZStack {
             if let image {
-                GalleryZoomImage(image: image, onTap: onTap, onInteraction: onInteraction)
+                GalleryZoomImage(image: image,
+                                 onTap: onTap,
+                                 onInteraction: onInteraction,
+                                 onZoomChanged: onZoomChanged)
                     .ignoresSafeArea()
             } else if let errorText {
                 VStack(spacing: 14) {
@@ -422,6 +476,7 @@ private struct GalleryZoomImage: UIViewRepresentable {
     let image: UIImage
     let onTap: () -> Void
     let onInteraction: () -> Void
+    let onZoomChanged: (Bool) -> Void
 
     func makeUIView(context: Context) -> UIScrollView {
         let scrollView = UIScrollView()
@@ -463,7 +518,7 @@ private struct GalleryZoomImage: UIViewRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onTap: onTap, onInteraction: onInteraction)
+        Coordinator(onTap: onTap, onInteraction: onInteraction, onZoomChanged: onZoomChanged)
     }
 
     final class Coordinator: NSObject, UIScrollViewDelegate {
@@ -471,10 +526,14 @@ private struct GalleryZoomImage: UIViewRepresentable {
         weak var imageView: UIImageView?
         private let onTap: () -> Void
         private let onInteraction: () -> Void
+        private let onZoomChanged: (Bool) -> Void
 
-        init(onTap: @escaping () -> Void, onInteraction: @escaping () -> Void) {
+        init(onTap: @escaping () -> Void,
+             onInteraction: @escaping () -> Void,
+             onZoomChanged: @escaping (Bool) -> Void) {
             self.onTap = onTap
             self.onInteraction = onInteraction
+            self.onZoomChanged = onZoomChanged
         }
 
         func viewForZooming(in scrollView: UIScrollView) -> UIView? {
@@ -487,11 +546,13 @@ private struct GalleryZoomImage: UIViewRepresentable {
 
         func scrollViewDidZoom(_ scrollView: UIScrollView) {
             scrollView.panGestureRecognizer.isEnabled = scrollView.zoomScale > 1.01
+            onZoomChanged(scrollView.zoomScale > 1.01)
             onInteraction()
         }
 
         func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
             scrollView.panGestureRecognizer.isEnabled = scale > 1.01
+            onZoomChanged(scale > 1.01)
         }
 
         @objc func handleSingleTap() {

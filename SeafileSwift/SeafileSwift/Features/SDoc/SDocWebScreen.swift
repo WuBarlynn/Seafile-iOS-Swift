@@ -548,8 +548,7 @@ struct SDocWebScreen: View {
                 var mime = type?.preferredMIMEType ?? "image/jpeg"
                 if settings.convertPhotosToJPEG,
                    mime.contains("heic") || mime.contains("heif") || ext == "heic" || ext == "heif",
-                   let image = UIImage(data: originalData),
-                   let jpeg = image.jpegData(compressionQuality: 0.9) {
+                   let jpeg = ImageTranscoder.jpegDataPreservingMetadata(from: originalData) {
                     data = jpeg
                     ext = "jpg"
                     mime = "image/jpeg"

@@ -1246,8 +1246,7 @@ struct FolderView: View {
                 var ext = type?.preferredFilenameExtension ?? "jpg"
                 if settings.convertPhotosToJPEG,
                    Self.isHEIF(type) || ext == "heic" || ext == "heif",
-                   let image = UIImage(data: originalData),
-                   let jpeg = image.jpegData(compressionQuality: 0.9) {
+                   let jpeg = ImageTranscoder.jpegDataPreservingMetadata(from: originalData) {
                     data = jpeg
                     ext = "jpg"
                 }

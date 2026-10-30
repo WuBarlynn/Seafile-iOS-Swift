@@ -540,8 +540,7 @@ final class PhotoSyncManager {
         try await Self.writeResource(prepared.resource, to: prepared.url)
 
         if prepared.convertsToJPEG {
-            guard let image = UIImage(contentsOfFile: prepared.url.path),
-                  let data = image.jpegData(compressionQuality: 0.9) else {
+            guard let data = ImageTranscoder.jpegDataPreservingMetadata(fromFile: prepared.url) else {
                 throw PhotoSyncError.invalidAsset
             }
             try data.write(to: prepared.url, options: .atomic)

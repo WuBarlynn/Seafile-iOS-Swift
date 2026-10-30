@@ -131,8 +131,7 @@ final class SDocCommentsModel {
     }
 
     func addImage(data: Data) {
-        guard let image = UIImage(data: data),
-              let jpeg = image.jpegData(compressionQuality: 0.9) else {
+        guard let jpeg = ImageTranscoder.jpegDataPreservingMetadata(from: data) else {
             toast = String(localized: "Could not read the selected image.")
             return
         }

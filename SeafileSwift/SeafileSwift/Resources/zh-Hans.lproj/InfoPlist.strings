@@ -1,0 +1,7 @@
+"CFBundleDisplayName" = "Seafile";
+"NSPhotoLibraryUsageDescription" = "选择照片上传，或自动将新的照片和视频备份到你的 Seafile 资料库。";
+"NSPhotoLibraryAddUsageDescription" = "将 Seafile 中的文件存储到照片图库。";
+"NSCameraUsageDescription" = "拍摄照片并上传到你的 Seafile 资料库。";
+"NSLocalNetworkUsageDescription" = "Seafile 需要连接本地网络中的 Seafile 服务器。";
+
+"NSFaceIDUsageDescription" = "使用面容 ID 解锁 Seafile。";

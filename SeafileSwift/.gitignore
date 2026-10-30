@@ -1,0 +1,7 @@
+build/
+build-signed/
+.DS_Store
+xcuserdata/
+*.xcuserstate
+build-device/
+dist/

@@ -51,6 +51,7 @@ struct PhotoGalleryScreen: View {
                 ForEach(Array(request.targets.enumerated()), id: \.element.id) { offset, target in
                     GalleryImagePage(target: target,
                                      isActive: abs(offset - index) <= 1,
+                                     isCurrent: offset == index,
                                      onTap: toggleChrome,
                                      onInteraction: scheduleHide,
                                      onZoomChanged: { zoomed in
@@ -470,6 +471,7 @@ private struct GalleryThumbnailCell: View {
 private struct GalleryImagePage: View {
     let target: PreviewTarget
     let isActive: Bool
+    let isCurrent: Bool
     let onTap: () -> Void
     let onInteraction: () -> Void
     let onZoomChanged: (Bool) -> Void
@@ -477,6 +479,10 @@ private struct GalleryImagePage: View {
     @Environment(Session.self) private var session
     @State private var image: UIImage?
     @State private var errorText: String?
+    @State private var livePhoto = MotionPhotoPlaybackController()
+    @State private var autoPreviewTask: Task<Void, Never>?
+    @State private var longPressTask: Task<Void, Never>?
+    @State private var didAutoPreview = false
 
     private var progress: TransferProgress? {
         session.transfers.downloadProgress(repoID: target.repo.id, path: target.path)
@@ -490,6 +496,32 @@ private struct GalleryImagePage: View {
                                  onInteraction: onInteraction,
                                  onZoomChanged: onZoomChanged)
                     .ignoresSafeArea()
+                if let player = livePhoto.currentPlayer, livePhoto.isPlaying {
+                    MotionPhotoVideoView(player: player)
+                        .ignoresSafeArea()
+                }
+                if livePhoto.hasVideo {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Button {
+                                if livePhoto.isPlaying {
+                                    livePhoto.stop()
+                                } else {
+                                    cancelAutoPreview()
+                                    livePhoto.play(muted: false)
+                                }
+                            } label: {
+                                LivePhotoBadge()
+                            }
+                            .buttonStyle(.plain)
+                            Spacer()
+                        }
+                    }
+                    .padding(.leading, 16)
+                    .padding(.bottom, 120)
+                    .transition(.opacity)
+                }
             } else if let errorText {
                 VStack(spacing: 14) {
                     Image(systemName: "photo.badge.exclamationmark")
@@ -523,17 +555,37 @@ private struct GalleryImagePage: View {
                 }
             }
         }
+        .onLongPressGesture(minimumDuration: 0.3, maximumDistance: 30) {
+        } onPressingChanged: { pressing in
+            handleLongPress(pressing)
+        }
         .task(id: "\(target.id)-\(isActive)") {
             guard isActive else { return }
             await load()
         }
+        .onChange(of: isCurrent) { _, current in
+            if current {
+                startAutoPreviewIfNeeded()
+            } else {
+                stopPlayback(resetAutoPreview: true)
+            }
+        }
+        .onDisappear {
+            stopPlayback(resetAutoPreview: true)
+            livePhoto.release()
+        }
     }
 
     private func load(force: Bool = false) async {
-        guard force || image == nil else { return }
+        guard force || image == nil else {
+            if isCurrent { startAutoPreviewIfNeeded() }
+            return
+        }
         if force {
             errorText = nil
             image = nil
+            stopPlayback(resetAutoPreview: true)
+            livePhoto.release()
         }
 
         if target.repo.encrypted {
@@ -549,15 +601,69 @@ private struct GalleryImagePage: View {
                                                            path: target.path,
                                                            name: target.name,
                                                            version: target.version)
-            guard let value = UIImage(contentsOfFile: url.path) else {
+            let data = try? Data(contentsOf: url, options: .mappedIfSafe)
+            var displayData = data
+            var videoURL: URL?
+            if let data, MotionPhoto.isMotionPhoto(data) {
+                displayData = MotionPhoto.imageData(from: data) ?? data
+                videoURL = await Task.detached(priority: .userInitiated) {
+                    MotionPhoto.videoFile(from: data)
+                }.value
+            }
+            guard let value = displayData.flatMap({ UIImage(data: $0) })
+                    ?? UIImage(contentsOfFile: url.path) else {
                 errorText = String(localized: "Unable to load this image.")
                 return
             }
             image = value
             errorText = nil
+            livePhoto.configure(videoURL: videoURL)
+            if isCurrent { startAutoPreviewIfNeeded() }
         } catch {
             errorText = error.localizedDescription
         }
+    }
+
+    private func handleLongPress(_ pressing: Bool) {
+        if pressing {
+            guard livePhoto.hasVideo else { return }
+            cancelAutoPreview()
+            longPressTask?.cancel()
+            longPressTask = Task {
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                guard !Task.isCancelled else { return }
+                livePhoto.play(muted: false)
+            }
+        } else {
+            longPressTask?.cancel()
+            longPressTask = nil
+            livePhoto.stop()
+        }
+    }
+
+    private func startAutoPreviewIfNeeded() {
+        guard livePhoto.hasVideo, !didAutoPreview else { return }
+        didAutoPreview = true
+        autoPreviewTask?.cancel()
+        autoPreviewTask = Task {
+            livePhoto.play(muted: true)
+            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            guard !Task.isCancelled else { return }
+            if livePhoto.isPlaying { livePhoto.stop() }
+        }
+    }
+
+    private func cancelAutoPreview() {
+        autoPreviewTask?.cancel()
+        autoPreviewTask = nil
+    }
+
+    private func stopPlayback(resetAutoPreview: Bool) {
+        cancelAutoPreview()
+        longPressTask?.cancel()
+        longPressTask = nil
+        livePhoto.stop()
+        if resetAutoPreview { didAutoPreview = false }
     }
 }
 

@@ -34,6 +34,7 @@ struct PreviewScreen: View {
     @State private var textReloadID = UUID()
     @State private var officePendingAction: OfficeFileAction?
     @State private var showFileInfo = false
+    @State private var livePhoto = MotionPhotoPlaybackController()
 
     @State private var unlockPassword = ""
     @State private var rememberRepoPassword = true
@@ -129,6 +130,7 @@ struct PreviewScreen: View {
         }
         .onDisappear {
             hideTask?.cancel()
+            livePhoto.release()
         }
         .onChange(of: quickLookURL) { _, newValue in
             if newValue == nil {
@@ -577,10 +579,41 @@ struct PreviewScreen: View {
     private func previewContent(url: URL) -> some View {
         switch kind {
         case .image:
-            if let image = UIImage(contentsOfFile: url.path) {
-                ZoomableImageView(image: image,
-                                  onTap: toggleChrome,
-                                  onInteraction: hideChrome)
+            if let image = previewImage(at: url) {
+                ZStack {
+                    ZoomableImageView(image: image,
+                                      onTap: toggleChrome,
+                                      onInteraction: hideChrome)
+                    if let player = livePhoto.currentPlayer, livePhoto.isPlaying {
+                        MotionPhotoVideoView(player: player)
+                            .ignoresSafeArea()
+                    }
+                    if livePhoto.hasVideo {
+                        VStack {
+                            Spacer()
+                            HStack {
+                                Button {
+                                    if livePhoto.isPlaying {
+                                        livePhoto.stop()
+                                    } else {
+                                        livePhoto.play(muted: false)
+                                    }
+                                } label: {
+                                    LivePhotoBadge()
+                                }
+                                .buttonStyle(.plain)
+                                Spacer()
+                            }
+                        }
+                        .padding(.leading, 16)
+                        .padding(.bottom, 88)
+                    }
+                }
+                .onLongPressGesture(minimumDuration: 0.3, maximumDistance: 30) {
+                    livePhoto.play(muted: false)
+                } onPressingChanged: { pressing in
+                    if !pressing { livePhoto.stop() }
+                }
             } else {
                 quickLookPlaceholder
             }
@@ -614,12 +647,21 @@ struct PreviewScreen: View {
         guard force || localURL == nil else { return }
         errorMessage = nil
         localURL = nil
+        livePhoto.release()
         do {
             let url = try await session.transfers.download(repoID: target.repo.id,
                                                            path: target.path,
                                                            name: target.name,
                                                            version: target.version)
             localURL = url
+            if kind == .image,
+               let data = try? Data(contentsOf: url, options: .mappedIfSafe),
+               MotionPhoto.isMotionPhoto(data) {
+                let videoURL = await Task.detached(priority: .userInitiated) {
+                    MotionPhoto.videoFile(from: data)
+                }.value
+                livePhoto.configure(videoURL: videoURL)
+            }
             if usesQuickLook && !needsOfficeMenu {
                 try? await Task.sleep(nanoseconds: 200_000_000)
                 quickLookURL = url
@@ -629,6 +671,13 @@ struct PreviewScreen: View {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func previewImage(at url: URL) -> UIImage? {
+        if let image = UIImage(contentsOfFile: url.path) { return image }
+        guard let data = try? Data(contentsOf: url, options: .mappedIfSafe),
+              let imageData = MotionPhoto.imageData(from: data) else { return nil }
+        return UIImage(data: imageData)
     }
 
     private func openOnlineOffice() {

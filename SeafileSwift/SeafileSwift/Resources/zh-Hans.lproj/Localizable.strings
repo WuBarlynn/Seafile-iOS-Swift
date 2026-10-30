@@ -582,3 +582,10 @@
 
 "Installed" = "已安装";
 "Not set" = "未设置";
+
+"Upload Live Photo" = "上传 Live Photo";
+"Live Photos are uploaded as Motion Photos (HEIC with the video embedded). This overrides JPEG conversion for Live Photos." = "Live Photo 将以实况照片格式上传（HEIC 内嵌视频）。开启后 Live Photo 不再转换为 JPEG。";
+"LIVE" = "LIVE";
+"Live Photo" = "实况照片";
+"The Live Photo video is not available yet. Please try again later." = "Live Photo 的视频暂不可用，请稍后重试。";
+"Could not convert this Live Photo for upload." = "无法转换该 Live Photo 用于上传。";

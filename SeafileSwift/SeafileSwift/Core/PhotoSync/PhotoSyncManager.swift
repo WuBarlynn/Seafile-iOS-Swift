@@ -506,6 +506,7 @@ final class PhotoSyncManager {
         let `extension`: String
         let resource: PHAssetResource
         let convertsToJPEG: Bool
+        let isLivePhoto: Bool
     }
 
     private func prepareExport(asset: PHAsset,
@@ -522,7 +523,14 @@ final class PhotoSyncManager {
         var ext = (originalName as NSString).pathExtension.lowercased()
         if ext.isEmpty { ext = (fallbackName as NSString).pathExtension.lowercased() }
 
-        let convertsToJPEG = asset.mediaType == .image
+        let isLivePhoto = asset.mediaType == .image
+            && settings.uploadLivePhotos
+            && LivePhotoExport.isLivePhoto(asset)
+            && LivePhotoExport.hasPairedVideo(asset)
+        if isLivePhoto { ext = "heic" }
+
+        let convertsToJPEG = !isLivePhoto
+            && asset.mediaType == .image
             && settings.convertPhotosToJPEG
             && (ext == "heic" || ext == "heif")
         if convertsToJPEG { ext = "jpg" }
@@ -533,17 +541,26 @@ final class PhotoSyncManager {
                              baseName: baseName,
                              extension: ext,
                              resource: resource,
-                             convertsToJPEG: convertsToJPEG)
+                             convertsToJPEG: convertsToJPEG,
+                             isLivePhoto: isLivePhoto)
     }
 
     private func export(prepared: PreparedAsset, asset: PHAsset) async throws {
-        try await Self.writeResource(prepared.resource, to: prepared.url)
+        if prepared.isLivePhoto {
+            let data = try await LivePhotoExport.motionPhotoData(for: asset)
+            let url = prepared.url
+            try await Task.detached(priority: .utility) {
+                try data.write(to: url, options: .atomic)
+            }.value
+        } else {
+            try await Self.writeResource(prepared.resource, to: prepared.url)
 
-        if prepared.convertsToJPEG {
-            guard let data = ImageTranscoder.jpegDataPreservingMetadata(fromFile: prepared.url) else {
-                throw PhotoSyncError.invalidAsset
+            if prepared.convertsToJPEG {
+                guard let data = ImageTranscoder.jpegDataPreservingMetadata(fromFile: prepared.url) else {
+                    throw PhotoSyncError.invalidAsset
+                }
+                try data.write(to: prepared.url, options: .atomic)
             }
-            try data.write(to: prepared.url, options: .atomic)
         }
 
         if let modified = asset.modificationDate {

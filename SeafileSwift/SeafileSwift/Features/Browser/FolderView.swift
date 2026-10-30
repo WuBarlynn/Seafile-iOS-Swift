@@ -1243,8 +1243,25 @@ struct FolderView: View {
         guard !photos.isEmpty else { return }
         Task {
             guard await ensureUnlockedForOperation() else { return }
+            if settings.uploadLivePhotos,
+               PHPhotoLibrary.authorizationStatus(for: .readWrite) == .notDetermined {
+                _ = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+            }
             var urls: [URL] = []
             for (index, item) in photos.enumerated() {
+                if settings.uploadLivePhotos,
+                   let identifier = item.itemIdentifier,
+                   let asset = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil).firstObject,
+                   LivePhotoExport.isLivePhoto(asset),
+                   LivePhotoExport.hasPairedVideo(asset),
+                   let data = try? await LivePhotoExport.motionPhotoData(for: asset) {
+                    let name = "Photo-\(Int(Date().timeIntervalSince1970))-\(index).heic"
+                    let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
+                    if (try? data.write(to: url)) != nil {
+                        urls.append(url)
+                        continue
+                    }
+                }
                 guard let originalData = try? await item.loadTransferable(type: Data.self) else { continue }
                 let type = item.supportedContentTypes.first
                 var data = originalData

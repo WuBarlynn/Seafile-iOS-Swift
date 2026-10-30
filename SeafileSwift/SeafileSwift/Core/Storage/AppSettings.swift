@@ -38,6 +38,7 @@ final class AppSettings {
         static let sortAscending = "settings.sortAscending"
         static let gridMode = "settings.gridMode"
         static let convertPhotosToJPEG = "settings.convertPhotosToJPEG"
+        static let uploadLivePhotos = "settings.uploadLivePhotos"
     }
 
     var appearance: AppearancePreference {
@@ -68,6 +69,10 @@ final class AppSettings {
         didSet { UserDefaults.standard.set(convertPhotosToJPEG, forKey: Keys.convertPhotosToJPEG) }
     }
 
+    var uploadLivePhotos: Bool {
+        didSet { UserDefaults.standard.set(uploadLivePhotos, forKey: Keys.uploadLivePhotos) }
+    }
+
     init() {
         let defaults = UserDefaults.standard
         appearance = AppearancePreference(rawValue: defaults.string(forKey: Keys.appearance) ?? "") ?? .system
@@ -77,5 +82,6 @@ final class AppSettings {
         biometricUnlockEnabled = defaults.object(forKey: AppSettingsKeys.biometricUnlock) as? Bool ?? false
         rememberRepoPasswords = defaults.object(forKey: AppSettingsKeys.rememberRepoPasswords) as? Bool ?? true
         convertPhotosToJPEG = defaults.object(forKey: Keys.convertPhotosToJPEG) as? Bool ?? false
+        uploadLivePhotos = defaults.object(forKey: Keys.uploadLivePhotos) as? Bool ?? false
     }
 }

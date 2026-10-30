@@ -225,6 +225,20 @@ struct SettingsView: View {
                     }
                 }
                 .tint(.seafileOrange)
+
+                Divider().opacity(0.5)
+
+                Toggle(isOn: Binding(get: { settings.uploadLivePhotos },
+                                     set: { settings.uploadLivePhotos = $0 })) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Upload Live Photo")
+                            .font(.subheadline.weight(.medium))
+                        Text("Live Photos are uploaded as Motion Photos (HEIC with the video embedded). This overrides JPEG conversion for Live Photos.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .tint(.seafileOrange)
             }
         }
         .glassCard(cornerRadius: 24, padding: 16)

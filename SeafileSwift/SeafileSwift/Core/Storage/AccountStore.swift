@@ -20,6 +20,7 @@ final class AccountStore {
         try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
         fileURL = base.appendingPathComponent("accounts.json")
         reloadFromDisk()
+        ShareSnapshotWriter.write(accounts: accounts, lastAccountID: lastAccountID)
     }
 
     private func reloadFromDisk() {
@@ -46,6 +47,7 @@ final class AccountStore {
         try? data.write(to: fileURL, options: .atomic)
         UserDefaults.standard.set(data, forKey: backupKey)
         try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: fileURL.path)
+        ShareSnapshotWriter.write(accounts: accounts, lastAccountID: lastAccountID)
     }
 
     @discardableResult

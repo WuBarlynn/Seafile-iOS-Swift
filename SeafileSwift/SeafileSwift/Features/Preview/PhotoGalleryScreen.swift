@@ -287,6 +287,10 @@ struct PhotoGalleryScreen: View {
                     toast = String(localized: "Photos access is required.")
                     return
                 }
+                if await MotionPhotoSaver.saveLivePhotoIfPossible(from: url) {
+                    toast = String(localized: "Saved to Photos.")
+                    return
+                }
                 try await PHPhotoLibrary.shared().performChanges {
                     PHAssetCreationRequest.forAsset().addResource(with: .photo,
                                                                   fileURL: url,

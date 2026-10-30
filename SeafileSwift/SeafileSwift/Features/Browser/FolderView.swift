@@ -1137,13 +1137,20 @@ struct FolderView: View {
         }
 
         do {
-            try await PHPhotoLibrary.shared().performChanges {
-                for url in media {
-                    let request = PHAssetCreationRequest.forAsset()
-                    let type: PHAssetResourceType = FileKind.of(name: url.lastPathComponent) == .video
-                        ? .video
-                        : .photo
-                    request.addResource(with: type, fileURL: url, options: nil)
+            var stillURLs: [URL] = []
+            for url in media {
+                if await MotionPhotoSaver.saveLivePhotoIfPossible(from: url) { continue }
+                stillURLs.append(url)
+            }
+            if !stillURLs.isEmpty {
+                try await PHPhotoLibrary.shared().performChanges {
+                    for url in stillURLs {
+                        let request = PHAssetCreationRequest.forAsset()
+                        let type: PHAssetResourceType = FileKind.of(name: url.lastPathComponent) == .video
+                            ? .video
+                            : .photo
+                        request.addResource(with: type, fileURL: url, options: nil)
+                    }
                 }
             }
             toast = String(format: String(localized: "Saved %lld items to Photos."), media.count)

@@ -51,6 +51,20 @@ enum MotionPhoto {
         }
     }
 
+    /// Still image bytes without the appended video, keeping the image itself
+    /// decodable. Returns nil when the file carries no motion-photo trailer.
+    static func stillImageData(from data: Data) -> Data? {
+        if let stripped = imageData(from: data) { return stripped }
+        guard let location = videoLocation(in: data) else { return nil }
+        if isJPEG(data) {
+            return data.prefix(location.range.lowerBound)
+        }
+        if let box = mpvdBox(in: data) {
+            return data.prefix(box.offset)
+        }
+        return nil
+    }
+
     /// Image bytes without the appended XMP/video boxes. Returns nil when the
     /// file does not carry a motion-photo trailer.
     static func imageData(from data: Data) -> Data? {

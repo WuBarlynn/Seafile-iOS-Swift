@@ -248,7 +248,10 @@ final class Session {
         cache = FileCache(accountID: account.id)
         offlineFiles = FileCache(accountID: account.id, persistent: true)
         offline = OfflineCache(accountID: account.id)
-        transfers = TransferCenter(api: api, cache: cache, offlineFiles: offlineFiles)
+        transfers = TransferCenter(api: api,
+                                   cache: cache,
+                                   offlineFiles: offlineFiles,
+                                   accountID: account.id)
         thumbnails = ThumbnailService(api: api,
                                       fileCache: cache,
                                       offlineFiles: offlineFiles)

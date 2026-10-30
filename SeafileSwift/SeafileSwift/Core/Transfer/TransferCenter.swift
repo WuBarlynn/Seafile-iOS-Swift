@@ -50,16 +50,37 @@ final class TransferCenter {
     private let api: APIClient
     let cache: FileCache
     let offlineFiles: FileCache
+    private let retryStore: TransferRetryStore
     private(set) var downloads: [String: TransferProgress] = [:]
     private(set) var uploadJobs: [UploadJob] = []
     private(set) var transferRecords: [TransferRecord] = []
     private var cancellationTokens: [String: TransferCancellationToken] = [:]
     var cryptoKeyProvider: ((String) -> RepoCryptoKey?)?
 
-    init(api: APIClient, cache: FileCache, offlineFiles: FileCache) {
+    init(api: APIClient, cache: FileCache, offlineFiles: FileCache, accountID: String) {
         self.api = api
         self.cache = cache
         self.offlineFiles = offlineFiles
+        retryStore = TransferRetryStore(accountID: accountID)
+
+        for stored in retryStore.load() {
+            guard let kind = TransferKind(rawValue: stored.kind) else { continue }
+            let sourceURL = retryStore.sourceURL(for: stored)
+            if kind == .upload, sourceURL == nil { continue }
+            transferRecords.append(TransferRecord(id: stored.id,
+                                                  kind: kind,
+                                                  name: stored.name,
+                                                  repoID: stored.repoID,
+                                                  path: stored.path,
+                                                  startedAt: stored.startedAt,
+                                                  progress: TransferProgress(state: .failed(stored.error)),
+                                                  finishedAt: Date(),
+                                                  downloadVersion: stored.version,
+                                                  persistOffline: stored.persistOffline,
+                                                  uploadReplace: stored.uploadReplace,
+                                                  retrySourceURL: sourceURL,
+                                                  retryAttempt: 1))
+        }
     }
 
     private func key(repoID: String, path: String) -> String { "\(repoID)|\(path)" }
@@ -155,6 +176,16 @@ final class TransferCenter {
                 markCancelled(id: recordID)
             } else {
                 finishRecord(id: recordID, progress: progress)
+                _ = persistFailedTransfer(recordID: recordID,
+                                          kind: .download,
+                                          name: name,
+                                          repoID: repoID,
+                                          path: path,
+                                          version: version,
+                                          persistOffline: persistOffline,
+                                          uploadReplace: false,
+                                          error: error,
+                                          sourceURL: nil)
                 if retryAttempt == 0, isRetryable(error) {
                     scheduleAutomaticRetry(id: recordID)
                 }
@@ -246,8 +277,17 @@ final class TransferCenter {
             if cancelled {
                 markCancelled(id: jobID)
             } else {
-                let retryURL = persistRetrySource(fileURL: fileURL, id: jobID)
                 finishRecord(id: jobID, progress: progress)
+                let retryURL = persistFailedTransfer(recordID: jobID,
+                                                     kind: .upload,
+                                                     name: fileName,
+                                                     repoID: repoID,
+                                                     path: dirPath,
+                                                     version: nil,
+                                                     persistOffline: false,
+                                                     uploadReplace: replace,
+                                                     error: error,
+                                                     sourceURL: fileURL)
                 if let retryURL,
                    let index = transferRecords.firstIndex(where: { $0.id == jobID }) {
                     transferRecords[index].retrySourceURL = retryURL
@@ -303,6 +343,7 @@ final class TransferCenter {
         case .download:
             guard let version = record.downloadVersion else { return }
             transferRecords.remove(at: index)
+            cleanupRetrySource(id: id)
             Task {
                 _ = try? await self.download(repoID: record.repoID,
                                              path: record.path,
@@ -416,30 +457,33 @@ final class TransferCenter {
         }
     }
 
-    private func persistRetrySource(fileURL: URL, id: String) -> URL? {
-        let directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("SeafileTransferRetry", isDirectory: true)
-            .appendingPathComponent(id, isDirectory: true)
-        do {
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            var name = FileNames.sanitized(fileURL.lastPathComponent)
-            if name.isEmpty { name = "upload" }
-            let destination = directory.appendingPathComponent(name)
-            if FileManager.default.fileExists(atPath: destination.path) {
-                try? FileManager.default.removeItem(at: destination)
-            }
-            try FileManager.default.copyItem(at: fileURL, to: destination)
-            return destination
-        } catch {
-            return nil
-        }
+    private func persistFailedTransfer(recordID: String,
+                                       kind: TransferKind,
+                                       name: String,
+                                       repoID: String,
+                                       path: String,
+                                       version: String?,
+                                       persistOffline: Bool,
+                                       uploadReplace: Bool,
+                                       error: Error,
+                                       sourceURL: URL?) -> URL? {
+        let startedAt = transferRecords.first(where: { $0.id == recordID })?.startedAt ?? Date()
+        let record = StoredTransferRetry(id: recordID,
+                                         kind: kind.rawValue,
+                                         name: name,
+                                         repoID: repoID,
+                                         path: path,
+                                         version: version,
+                                         persistOffline: persistOffline,
+                                         uploadReplace: uploadReplace,
+                                         error: error.localizedDescription,
+                                         startedAt: startedAt,
+                                         sourceFileName: nil)
+        return retryStore.save(record, sourceURL: sourceURL)
     }
 
     private func cleanupRetrySource(id: String) {
-        let directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("SeafileTransferRetry", isDirectory: true)
-            .appendingPathComponent(id, isDirectory: true)
-        try? FileManager.default.removeItem(at: directory)
+        retryStore.remove(id: id)
     }
 
     private func scheduleCleanup(jobID: String, delay: TimeInterval = 3) {

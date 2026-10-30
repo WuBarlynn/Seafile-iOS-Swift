@@ -25,9 +25,8 @@ committed.
 
 No GitHub Release or prebuilt IPA is published from this repository.
 
-The current development version is **0.9.0**. The project will be versioned
-independently from the upstream Seafile iOS client and is planned to become
-**1.0** once the remaining development work is complete.
+The current version is **1.0.0**. The rewrite is versioned independently from
+the upstream Seafile iOS client.
 
 ## Requirements
 
@@ -128,16 +127,21 @@ cp -R build-device/Build/Products/Release-iphoneos/*.appex Payload/SeafileSwift.
 
 ## Implemented areas
 
-The rewrite includes account and SSO login, multi-account switching, library
-browsing, copy/move/delete, previews, Markdown/Python editing, SeaDoc editing
-and comments, online Office, Wiki, search, starred items, activities, settings,
-local encrypted-library decryption, camera/photo upload, Live Photo upload and
-playback, photo backup, offline downloads, transfer management,
-client-certificate authentication, a share extension, and a File Provider
-extension for the Files app.
+The rewrite includes account and SSO login (password, two-step verification,
+Shibboleth and client SSO), multi-account switching, library browsing,
+copy/move/delete and batch selection, previews, Markdown/Python editing, SeaDoc
+editing and comments, online Office, Wiki, search, starred items, activities,
+settings, local encrypted-library decryption (v1/v2/v4), camera/photo upload,
+Live Photo upload and playback, photo backup with optional background upload,
+offline downloads, transfer management, client-certificate authentication, Face
+ID app lock, a share extension, and a File Provider extension for the Files app.
+The interface is localized into 21 languages and the Libraries tab uses a
+sidebar/detail layout on iPad.
 
-Some upstream features and extensions are still in progress; check the source
-and commit history for the current state.
+Known gaps compared with the upstream client: WeChat sharing (needs the WeChat
+SDK), editing of SeaDoc geolocation metadata (read-only, matching upstream), and
+a few legacy iOS features that upstream removed from its current code. Check the
+source and commit history for details.
 
 ## License
 

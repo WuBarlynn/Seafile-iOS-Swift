@@ -1,7 +1,5 @@
 import Foundation
-import ImageIO
 import Photos
-import UniformTypeIdentifiers
 
 enum LivePhotoExportError: LocalizedError {
     case missingPairedVideo
@@ -26,8 +24,21 @@ enum LivePhotoExport {
         pairedResources(for: asset) != nil
     }
 
-    /// Always returns HEIC data (JPEG sources are transcoded) with the paired
-    /// video appended as a Motion Photo trailer.
+    /// File extension for the composed Motion Photo, or nil when the still
+    /// image format is not supported.
+    static func outputExtension(for asset: PHAsset) -> String? {
+        guard let resources = pairedResources(for: asset) else { return nil }
+        let ext = (resources.photo.originalFilename as NSString).pathExtension.lowercased()
+        switch ext {
+        case "heic", "heif", "jpg", "jpeg":
+            return ext == "jpeg" ? "jpg" : ext
+        default:
+            return nil
+        }
+    }
+
+    /// Returns HEIC or JPEG data with the paired video appended as a Motion
+    /// Photo trailer, matching the still image's original format.
     static func motionPhotoData(for asset: PHAsset) async throws -> Data {
         guard let resources = pairedResources(for: asset) else {
             throw LivePhotoExportError.missingPairedVideo
@@ -47,9 +58,7 @@ enum LivePhotoExport {
 
         let imageData = try Data(contentsOf: imageURL, options: .mappedIfSafe)
         let videoData = try Data(contentsOf: videoURL, options: .mappedIfSafe)
-        let heicData = MotionPhoto.isHEIC(imageData) ? imageData : heicData(from: imageData)
-        guard let heicData,
-              let composed = MotionPhoto.compose(imageData: heicData, videoData: videoData) else {
+        guard let composed = MotionPhoto.compose(imageData: imageData, videoData: videoData) else {
             throw LivePhotoExportError.compositionFailed
         }
         return composed
@@ -77,23 +86,5 @@ enum LivePhotoExport {
                 }
             }
         }
-    }
-
-    private static func heicData(from data: Data) -> Data? {
-        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
-              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
-            return nil
-        }
-        let output = NSMutableData()
-        guard let destination = CGImageDestinationCreateWithData(output,
-                                                                 UTType.heic.identifier as CFString,
-                                                                 1,
-                                                                 nil) else {
-            return nil
-        }
-        let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
-        CGImageDestinationAddImage(destination, image, properties as CFDictionary?)
-        guard CGImageDestinationFinalize(destination) else { return nil }
-        return output as Data
     }
 }

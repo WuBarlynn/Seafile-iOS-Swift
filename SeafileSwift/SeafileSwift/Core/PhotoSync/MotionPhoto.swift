@@ -68,13 +68,34 @@ enum MotionPhoto {
     }
 
     static func compose(imageData: Data, videoData: Data) -> Data? {
-        guard isHEIC(imageData), isVideo(videoData) else { return nil }
-        let xmp = xmpData(videoLength: videoData.count)
-        var result = Data(capacity: imageData.count + xmp.count + videoData.count + 40)
-        result.append(imageData)
-        result.append(uuidBox(xmp))
-        result.append(mpvdBox(videoData))
-        return result
+        guard isVideo(videoData) else { return nil }
+        if isHEIC(imageData) {
+            let xmp = xmpData(videoLength: videoData.count,
+                              microVideoOffset: videoData.count,
+                              videoPadding: 8,
+                              imageMime: "image/heic")
+            var result = Data(capacity: imageData.count + xmp.count + videoData.count + 40)
+            result.append(imageData)
+            result.append(uuidBox(xmp))
+            result.append(mpvdBox(videoData))
+            return result
+        }
+        if isJPEG(imageData) {
+            let xmp = xmpData(videoLength: videoData.count,
+                              microVideoOffset: videoData.count,
+                              videoPadding: 0,
+                              imageMime: "image/jpeg")
+            guard let withXMP = jpegAddingXMP(imageData, xmp: xmp) else { return nil }
+            var result = Data(capacity: withXMP.count + videoData.count)
+            result.append(withXMP)
+            result.append(videoData)
+            return result
+        }
+        return nil
+    }
+
+    static func isJPEG(_ data: Data) -> Bool {
+        data.count > 2 && data[data.startIndex] == 0xFF && data[data.startIndex + 1] == 0xD8
     }
 
     static func isHEIC(_ data: Data) -> Bool {
@@ -171,7 +192,10 @@ enum MotionPhoto {
 
     // MARK: - Composition
 
-    private static func xmpData(videoLength: Int) -> Data {
+    private static func xmpData(videoLength: Int,
+                                microVideoOffset: Int,
+                                videoPadding: Int,
+                                imageMime: String) -> Data {
         let timestamp = -1
         var xmp = ""
         xmp += "<x:xmpmeta xmlns:x=\"adobe:ns:meta/\" x:xmptk=\"XMP Core 6.0.0\">\n"
@@ -185,13 +209,13 @@ enum MotionPhoto {
         xmp += "            GCamera:MotionPhotoPresentationTimestampUs=\"\(timestamp)\"\n"
         xmp += "            GCamera:MicroVideo=\"1\"\n"
         xmp += "            GCamera:MicroVideoVersion=\"1\"\n"
-        xmp += "            GCamera:MicroVideoOffset=\"\(videoLength)\"\n"
+        xmp += "            GCamera:MicroVideoOffset=\"\(microVideoOffset)\"\n"
         xmp += "            GCamera:MicroVideoPresentationTimestampUs=\"\(timestamp)\">\n"
         xmp += "         <Container:Directory>\n"
         xmp += "            <rdf:Seq>\n"
         xmp += "               <rdf:li rdf:parseType=\"Resource\">\n"
         xmp += "                  <Container:Item\n"
-        xmp += "                     Item:Mime=\"image/heic\"\n"
+        xmp += "                     Item:Mime=\"\(imageMime)\"\n"
         xmp += "                     Item:Semantic=\"Primary\"\n"
         xmp += "                     Item:Length=\"0\"\n"
         xmp += "                     Item:Padding=\"0\"/>\n"
@@ -201,7 +225,7 @@ enum MotionPhoto {
         xmp += "                     Item:Mime=\"video/quicktime\"\n"
         xmp += "                     Item:Semantic=\"MotionPhoto\"\n"
         xmp += "                     Item:Length=\"\(videoLength)\"\n"
-        xmp += "                     Item:Padding=\"8\"/>\n"
+        xmp += "                     Item:Padding=\"\(videoPadding)\"/>\n"
         xmp += "               </rdf:li>\n"
         xmp += "            </rdf:Seq>\n"
         xmp += "         </Container:Directory>\n"
@@ -209,6 +233,20 @@ enum MotionPhoto {
         xmp += "   </rdf:RDF>\n"
         xmp += "</x:xmpmeta>"
         return Data(xmp.utf8)
+    }
+
+    private static func jpegAddingXMP(_ jpeg: Data, xmp: Data) -> Data? {
+        let namespace = Data("http://ns.adobe.com/xap/1.0/\0".utf8)
+        let segmentLength = 2 + namespace.count + xmp.count
+        guard segmentLength <= 65535 else { return nil }
+        var result = Data(capacity: jpeg.count + segmentLength + 4)
+        result.append(contentsOf: [0xFF, 0xD8, 0xFF, 0xE1])
+        result.append(contentsOf: [UInt8((segmentLength >> 8) & 0xFF),
+                                   UInt8(segmentLength & 0xFF)])
+        result.append(namespace)
+        result.append(xmp)
+        result.append(jpeg.dropFirst(2))
+        return result
     }
 
     private static func uuidBox(_ xmp: Data) -> Data {

@@ -479,6 +479,8 @@ private struct GalleryImagePage: View {
     @Environment(Session.self) private var session
     @State private var image: UIImage?
     @State private var errorText: String?
+    @State private var fileURL: URL?
+    @State private var isMotionPhotoFile = false
     @State private var livePhoto = MotionPhotoPlaybackController()
     @State private var autoPreviewTask: Task<Void, Never>?
     @State private var longPressTask: Task<Void, Never>?
@@ -577,13 +579,18 @@ private struct GalleryImagePage: View {
     }
 
     private func load(force: Bool = false) async {
-        guard force || image == nil else {
+        if !force, image != nil {
+            if isMotionPhotoFile && !livePhoto.hasVideo {
+                await prepareMotionVideo()
+            }
             if isCurrent { startAutoPreviewIfNeeded() }
             return
         }
         if force {
             errorText = nil
             image = nil
+            fileURL = nil
+            isMotionPhotoFile = false
             stopPlayback(resetAutoPreview: true)
             livePhoto.release()
         }
@@ -601,10 +608,12 @@ private struct GalleryImagePage: View {
                                                            path: target.path,
                                                            name: target.name,
                                                            version: target.version)
+            fileURL = url
             let data = try? Data(contentsOf: url, options: .mappedIfSafe)
             var displayData = data
             var videoURL: URL?
             if let data, MotionPhoto.isMotionPhoto(data) {
+                isMotionPhotoFile = true
                 displayData = MotionPhoto.imageData(from: data) ?? data
                 videoURL = await Task.detached(priority: .userInitiated) {
                     MotionPhoto.videoFile(from: data)
@@ -622,6 +631,18 @@ private struct GalleryImagePage: View {
         } catch {
             errorText = error.localizedDescription
         }
+    }
+
+    private func prepareMotionVideo() async {
+        guard let fileURL,
+              let data = try? Data(contentsOf: fileURL, options: .mappedIfSafe) else {
+            return
+        }
+        let videoURL = await Task.detached(priority: .userInitiated) {
+            MotionPhoto.videoFile(from: data)
+        }.value
+        guard !Task.isCancelled else { return }
+        livePhoto.configure(videoURL: videoURL)
     }
 
     private func handleLongPress(_ pressing: Bool) {

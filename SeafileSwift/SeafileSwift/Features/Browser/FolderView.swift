@@ -1253,9 +1253,10 @@ struct FolderView: View {
                    let identifier = item.itemIdentifier,
                    let asset = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil).firstObject,
                    LivePhotoExport.isLivePhoto(asset),
+                   let ext = LivePhotoExport.outputExtension(for: asset),
                    LivePhotoExport.hasPairedVideo(asset),
                    let data = try? await LivePhotoExport.motionPhotoData(for: asset) {
-                    let name = "Photo-\(Int(Date().timeIntervalSince1970))-\(index).heic"
+                    let name = "Photo-\(Int(Date().timeIntervalSince1970))-\(index).\(ext)"
                     let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
                     if (try? data.write(to: url)) != nil {
                         urls.append(url)

@@ -523,11 +523,13 @@ final class PhotoSyncManager {
         var ext = (originalName as NSString).pathExtension.lowercased()
         if ext.isEmpty { ext = (fallbackName as NSString).pathExtension.lowercased() }
 
+        let liveExtension = LivePhotoExport.outputExtension(for: asset)
         let isLivePhoto = asset.mediaType == .image
             && settings.uploadLivePhotos
             && LivePhotoExport.isLivePhoto(asset)
+            && liveExtension != nil
             && LivePhotoExport.hasPairedVideo(asset)
-        if isLivePhoto { ext = "heic" }
+        if isLivePhoto, let liveExtension { ext = liveExtension }
 
         let convertsToJPEG = !isLivePhoto
             && asset.mediaType == .image

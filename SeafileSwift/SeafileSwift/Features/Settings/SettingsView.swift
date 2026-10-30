@@ -378,9 +378,20 @@ struct SettingsView: View {
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                     if session.photoSync.isLimitedAccess {
-                        Text("Only photos selected in system settings are backed up.")
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
+                        HStack {
+                            Text("Only photos selected in system settings are backed up.")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                            Spacer(minLength: 8)
+                            Button {
+                                session.photoSync.presentLimitedLibraryPicker()
+                            } label: {
+                                Text("Manage Selected Photos")
+                                    .font(.caption.weight(.medium))
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Color.seafileOrange)
+                        }
                     }
                 } else {
                     Text("New items are uploaded to the “Camera Uploads” folder in the library you choose.")

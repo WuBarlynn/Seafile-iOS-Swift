@@ -59,5 +59,15 @@ struct MainView: View {
             app.toastMessage = message
             session.offlineDownloads.clearLastMessage()
         }
+        .onChange(of: app.pendingDeepLink) { _, link in
+            if link != nil {
+                selection = .libraries
+            }
+        }
+        .onAppear {
+            if app.pendingDeepLink != nil {
+                selection = .libraries
+            }
+        }
     }
 }

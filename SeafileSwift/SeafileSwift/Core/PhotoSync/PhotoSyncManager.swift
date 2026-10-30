@@ -719,6 +719,20 @@ final class PhotoSyncManager {
         authorization = PhotoSyncAuthorization(PHPhotoLibrary.authorizationStatus(for: .readWrite))
     }
 
+    func presentLimitedLibraryPicker() {
+        guard authorization == .limited,
+              let scene = UIApplication.shared.connectedScenes
+                  .compactMap({ $0 as? UIWindowScene })
+                  .first(where: { $0.activationState == .foregroundActive }),
+              var top = scene.keyWindow?.rootViewController else {
+            return
+        }
+        while let presented = top.presentedViewController {
+            top = presented
+        }
+        PHPhotoLibrary.shared().presentLimitedLibraryPicker(from: top)
+    }
+
     private func registerObserver() {
         guard observer == nil, authorization.canRead else { return }
         let observer = PhotoLibraryObserver(manager: self)

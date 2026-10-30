@@ -593,3 +593,5 @@
 "Enable Wiki" = "开启知识库";
 "Background Upload" = "后台上传";
 "Let iOS continue backing up photos while Seafile is not open." = "允许 iOS 在 Seafile 未打开时继续备份照片。";
+"Copied." = "已复制。";
+"Manage Selected Photos" = "管理已选照片";

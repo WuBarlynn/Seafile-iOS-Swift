@@ -568,3 +568,5 @@
 "Enable Wiki" = "위키 사용";
 "Background Upload" = "백그라운드 업로드";
 "Let iOS continue backing up photos while Seafile is not open." = "Seafile이 열려 있지 않을 때도 iOS가 사진을 계속 백업하도록 허용합니다.";
+"Copied." = "복사되었습니다.";
+"Manage Selected Photos" = "선택한 사진 관리";

@@ -64,6 +64,10 @@ struct LibrarySplitBrowser: View {
             if session.repositories.isEmpty {
                 await session.refreshLibraries()
             }
+            consumeDeepLink()
+        }
+        .onChange(of: app.pendingDeepLink) { _, _ in
+            consumeDeepLink()
         }
         .onChange(of: session.repositories) { _, repositories in
             guard let selection else { return }
@@ -200,6 +204,15 @@ struct LibrarySplitBrowser: View {
         } label: {
             Label("Refresh", systemImage: "arrow.clockwise")
         }
+    }
+
+    private func consumeDeepLink() {
+        guard let request = app.pendingDeepLink,
+              let repo = session.repositories.first(where: { $0.id == request.repoID }) else {
+            return
+        }
+        app.pendingDeepLink = nil
+        selection = FolderRoute(repo: repo, path: request.path)
     }
 
     private func renameLibrary() {

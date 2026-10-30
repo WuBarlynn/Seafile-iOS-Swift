@@ -57,6 +57,9 @@ struct RootView: View {
                 PhotoSyncBackgroundScheduler.shared.schedule()
             }
         }
+        .onOpenURL { url in
+            app.handleIncomingURL(url)
+        }
     }
 }
 

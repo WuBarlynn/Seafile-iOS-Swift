@@ -7,6 +7,12 @@ enum AppPhase: Equatable {
     case signedIn
 }
 
+struct DeepLinkTarget: Identifiable, Equatable {
+    let id = UUID()
+    let repoID: String
+    let path: String
+}
+
 @MainActor
 @Observable
 final class AppModel {
@@ -18,6 +24,7 @@ final class AppModel {
     let settings = AppSettings()
 
     var toastMessage: String?
+    var pendingDeepLink: DeepLinkTarget?
 
     private let store = AccountStore.shared
     private var didBootstrap = false
@@ -157,5 +164,16 @@ final class AppModel {
         guard let session else { return }
         store.updateProfile(id: session.account.id, displayName: displayName, email: email)
         accounts = store.accounts
+    }
+
+    func handleIncomingURL(_ url: URL) {
+        guard url.scheme?.lowercased() == "seafile" else { return }
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        guard let repoID = items.first(where: { $0.name == "repo_id" })?.value, !repoID.isEmpty,
+              var path = items.first(where: { $0.name == "path" })?.value else {
+            return
+        }
+        if !path.hasPrefix("/") { path = "/" + path }
+        pendingDeepLink = DeepLinkTarget(repoID: repoID, path: path)
     }
 }

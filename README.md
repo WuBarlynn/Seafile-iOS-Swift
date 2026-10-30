@@ -25,7 +25,7 @@ committed.
 
 No GitHub Release or prebuilt IPA is published from this repository.
 
-The current version is **1.0.0**. The rewrite is versioned independently from
+The current version is **1.0.1**. The rewrite is versioned independently from
 the upstream Seafile iOS client.
 
 ## Requirements
@@ -129,19 +129,22 @@ cp -R build-device/Build/Products/Release-iphoneos/*.appex Payload/SeafileSwift.
 
 The rewrite includes account and SSO login (password, two-step verification,
 Shibboleth and client SSO), multi-account switching, library browsing,
-copy/move/delete and batch selection, previews, Markdown/Python editing, SeaDoc
-editing and comments, online Office, Wiki, search, starred items, activities,
-settings, local encrypted-library decryption (v1/v2/v4), camera/photo upload,
-Live Photo upload and playback, photo backup with optional background upload,
-offline downloads, transfer management, client-certificate authentication, Face
-ID app lock, a share extension, and a File Provider extension for the Files app.
-The interface is localized into 21 languages and the Libraries tab uses a
+copy/move/delete and batch selection (including starring), previews with
+star/save/delete actions, Markdown/Python editing, SeaDoc editing and comments,
+online Office, Wiki, search, starred items, activities, settings, local
+encrypted-library decryption (v1/v2/v4), camera/photo/video upload (with Live
+Photo and HEIC handling), photo backup with optional background upload and
+limited-library management, offline downloads, transfer management,
+client-certificate authentication, Face ID app lock, seafile:// deep links,
+a share extension, and a File Provider extension for the Files app. The
+interface is localized into 21 languages and the Libraries tab uses a
 sidebar/detail layout on iPad.
 
 Known gaps compared with the upstream client: WeChat sharing (needs the WeChat
-SDK), editing of SeaDoc geolocation metadata (read-only, matching upstream), and
-a few legacy iOS features that upstream removed from its current code. Check the
-source and commit history for details.
+SDK), PDF markup saved as a new version, File Provider thumbnails and trash,
+opening external files with "Open in Seafile", and editing of SeaDoc
+geolocation metadata (read-only, matching upstream). Check the source and commit
+history for details.
 
 ## License
 

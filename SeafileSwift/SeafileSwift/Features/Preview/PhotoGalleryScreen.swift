@@ -187,6 +187,12 @@ struct PhotoGalleryScreen: View {
                 }
                 .disabled(isPreparingExport)
 
+                Button {
+                    copyCurrentImage()
+                } label: {
+                    Label("Copy", systemImage: "doc.on.doc")
+                }
+
                 if let target = currentTarget {
                     Button {
                         infoTarget = target
@@ -303,8 +309,24 @@ struct PhotoGalleryScreen: View {
         }
     }
 
-    private func exportCurrentToFiles() {
-        guard let target = currentTarget, !isPreparingExport else { return }
+    private func copyCurrentImage() {
+        guard let target = currentTarget else { return }
+        Task {
+            do {
+                let url = try await localURL(for: target)
+                guard let image = UIImage(contentsOfFile: url.path) else {
+                    toast = String(localized: "Unable to load this image.")
+                    return
+                }
+                UIPasteboard.general.image = image
+                toast = String(localized: "Copied.")
+            } catch {
+                toast = error.localizedDescription
+            }
+        }
+    }
+
+    private func exportCurrentToFiles() {        guard let target = currentTarget, !isPreparingExport else { return }
         isPreparingExport = true
         Task {
             defer { isPreparingExport = false }

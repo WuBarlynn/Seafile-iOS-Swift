@@ -570,3 +570,5 @@
 "Enable Wiki" = "تفعيل الويكي";
 "Background Upload" = "التحميل في الخلفية";
 "Let iOS continue backing up photos while Seafile is not open." = "اسمح لنظام iOS بمتابعة نسخ الصور احتياطيًا أثناء عدم فتح Seafile.";
+"Copied." = "تم النسخ.";
+"Manage Selected Photos" = "إدارة الصور المحددة";

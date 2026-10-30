@@ -570,3 +570,5 @@
 "Enable Wiki" = "Wiki engedélyezése";
 "Background Upload" = "Feltöltés a háttérben";
 "Let iOS continue backing up photos while Seafile is not open." = "Engedélyezze, hogy az iOS a Seafile bezárása után is biztonsági másolatot készítsen a fényképekről.";
+"Copied." = "Kimásolva.";
+"Manage Selected Photos" = "Kiválasztott fotók kezelése";

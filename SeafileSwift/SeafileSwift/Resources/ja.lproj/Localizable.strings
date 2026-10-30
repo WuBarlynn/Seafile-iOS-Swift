@@ -568,3 +568,5 @@
 "Enable Wiki" = "Wiki を有効にする";
 "Background Upload" = "バックグラウンドアップロード";
 "Let iOS continue backing up photos while Seafile is not open." = "Seafile を開いていない間も iOS による写真のバックアップを続行します。";
+"Copied." = "コピーしました。";
+"Manage Selected Photos" = "選択した写真を管理";

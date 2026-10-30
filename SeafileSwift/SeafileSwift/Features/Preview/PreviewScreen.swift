@@ -1,5 +1,6 @@
 import AVKit
 import PDFKit
+import Photos
 import QuickLook
 import SwiftUI
 import UIKit
@@ -34,6 +35,8 @@ struct PreviewScreen: View {
     @State private var textReloadID = UUID()
     @State private var officePendingAction: OfficeFileAction?
     @State private var showFileInfo = false
+    @State private var showDeleteConfirm = false
+    @State private var isSavingToPhotos = false
     @State private var livePhoto = MotionPhotoPlaybackController()
 
     @State private var unlockPassword = ""
@@ -163,6 +166,14 @@ struct PreviewScreen: View {
         .sheet(isPresented: $showFileInfo) {
             FileInfoSheet(target: target)
         }
+        .confirmationDialog("Delete “\(target.name)”?",
+                            isPresented: $showDeleteConfirm,
+                            titleVisibility: .visible) {
+            Button("Delete", role: .destructive) { deleteFile() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This action cannot be undone.")
+        }
         .seafileToast($toast)
     }
 
@@ -231,6 +242,18 @@ struct PreviewScreen: View {
                             Label("Open with Quick Look", systemImage: "doc.viewfinder")
                         }
                     }
+                    moreActions
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 15, weight: .semibold))
+                        .frame(width: 36, height: 36)
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("More actions")
+            } else if !needsOfficeMenu {
+                Menu {
+                    moreActions
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 15, weight: .semibold))
@@ -261,6 +284,97 @@ struct PreviewScreen: View {
             Capsule(style: .continuous)
                 .strokeBorder(Color.white.opacity(0.16), lineWidth: 0.6)
                 .blendMode(.plusLighter)
+        }
+    }
+
+    @ViewBuilder
+    private var moreActions: some View {
+        Button {
+            toggleStar()
+        } label: {
+            Label(isStarred ? "Remove Star" : "Star",
+                  systemImage: isStarred ? "star.slash" : "star")
+        }
+
+        if canSaveToPhotos, let localURL {
+            Button {
+                saveToPhotos(localURL)
+            } label: {
+                Label("Save to Photos", systemImage: "photo.badge.arrow.down")
+            }
+            .disabled(isSavingToPhotos)
+        }
+
+        if !target.repo.isReadOnly {
+            Button(role: .destructive) {
+                showDeleteConfirm = true
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+    }
+
+    private var isStarred: Bool {
+        session.isStarred(repoID: target.repo.id, path: target.path)
+    }
+
+    private var canSaveToPhotos: Bool {
+        kind == .image || kind == .video
+    }
+
+    private func toggleStar() {
+        Task {
+            do {
+                try await session.toggleStarred(repoID: target.repo.id, path: target.path)
+                toast = isStarred
+                    ? String(localized: "Added to starred.")
+                    : String(localized: "Removed from starred.")
+            } catch {
+                toast = error.localizedDescription
+            }
+        }
+    }
+
+    private func saveToPhotos(_ url: URL) {
+        guard !isSavingToPhotos else { return }
+        isSavingToPhotos = true
+        Task {
+            defer { isSavingToPhotos = false }
+            let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+            guard status == .authorized || status == .limited else {
+                toast = String(localized: "Photos access is required.")
+                return
+            }
+            do {
+                if kind == .image, await MotionPhotoSaver.saveLivePhotoIfPossible(from: url) {
+                    toast = String(localized: "Saved to Photos.")
+                    return
+                }
+                try await PHPhotoLibrary.shared().performChanges {
+                    PHAssetCreationRequest.forAsset().addResource(with: kind == .video ? .video : .photo,
+                                                                  fileURL: url,
+                                                                  options: nil)
+                }
+                toast = String(localized: "Saved to Photos.")
+            } catch {
+                toast = error.localizedDescription
+            }
+        }
+    }
+
+    private func deleteFile() {
+        Task {
+            let dir = (target.path as NSString).deletingLastPathComponent
+            do {
+                try await session.api.deleteEntries(repoID: target.repo.id,
+                                                    dirPath: dir.isEmpty ? "/" : dir,
+                                                    names: [target.name])
+                toast = String(localized: "Deleted.")
+                onFileChanged?()
+                dismiss()
+            } catch {
+                toast = error.localizedDescription
+            }
         }
     }
 

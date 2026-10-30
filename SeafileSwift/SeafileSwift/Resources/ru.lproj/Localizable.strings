@@ -570,3 +570,5 @@
 "Enable Wiki" = "Включить вики";
 "Background Upload" = "Загрузка в фоновом режиме";
 "Let iOS continue backing up photos while Seafile is not open." = "Разрешить iOS продолжать резервное копирование фото, пока Seafile не открыт.";
+"Copied." = "Скопировано.";
+"Manage Selected Photos" = "Управление выбранными фото";

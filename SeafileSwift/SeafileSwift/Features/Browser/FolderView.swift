@@ -87,6 +87,11 @@ struct FolderView: View {
             return kind == .image || kind == .video
         }
     }
+    private var allSelectionStarred: Bool {
+        !selectedItems.isEmpty && selectedItems.allSatisfy {
+            session.isStarred(repoID: repo.id, path: $0.path)
+        }
+    }
     private var displayTitle: String { path == "/" ? repo.name : (path as NSString).lastPathComponent }
     private var displayPath: String { path == "/" ? repo.name : path }
     private var uploadConflictMessage: String {
@@ -163,8 +168,8 @@ struct FolderView: View {
         }
         .photosPicker(isPresented: $showPhotoPicker,
                       selection: $photoItems,
-                      maxSelectionCount: 20,
-                      matching: .images)
+                      maxSelectionCount: nil,
+                      matching: .any(of: [.images, .videos]))
         .onChange(of: photoItems) { _, newValue in
             uploadPhotos(newValue)
         }
@@ -337,6 +342,12 @@ struct FolderView: View {
                     } label: {
                         Label("Save to Photos", systemImage: "photo.badge.arrow.down")
                     }
+                }
+                Button {
+                    starSelection()
+                } label: {
+                    Label(allSelectionStarred ? "Remove Star" : "Star",
+                          systemImage: allSelectionStarred ? "star.slash" : "star")
                 }
             } label: {
                 Image(systemName: "square.and.arrow.up")
@@ -1017,6 +1028,19 @@ struct FolderView: View {
         }
     }
 
+    private func starSelection() {
+        let targets = selectedItems
+        let star = !allSelectionStarred
+        Task {
+            for item in targets {
+                if session.isStarred(repoID: repo.id, path: item.path) != star {
+                    try? await session.toggleStarred(repoID: repo.id, path: item.path)
+                }
+            }
+            toast = star ? String(localized: "Added to starred.") : String(localized: "Removed from starred.")
+        }
+    }
+
     private func copyLink(_ dirent: Dirent) {
         Task {
             guard await ensureUnlockedForOperation() else { return }
@@ -1272,6 +1296,12 @@ struct FolderView: View {
                 }
                 guard let originalData = try? await item.loadTransferable(type: Data.self) else { continue }
                 let type = item.supportedContentTypes.first
+                if type?.conforms(to: .movie) == true || type?.conforms(to: .video) == true {
+                    if let url = await exportVideo(item: item, index: index) {
+                        urls.append(url)
+                    }
+                    continue
+                }
                 var data = originalData
                 var ext = type?.preferredFilenameExtension ?? "jpg"
                 if settings.convertPhotosToJPEG,
@@ -1314,6 +1344,26 @@ struct FolderView: View {
                     : String(localized: "Uploaded \(urls.count) photos.")
             }
         }
+    }
+
+    private func exportVideo(item: PhotosPickerItem, index: Int) async -> URL? {
+        guard let identifier = item.itemIdentifier,
+              let asset = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil).firstObject else {
+            return nil
+        }
+        let resources = PHAssetResource.assetResources(for: asset)
+        guard let resource = resources.first(where: { $0.type == .video }) ?? resources.first else {
+            return nil
+        }
+        let ext = UTType(resource.uniformTypeIdentifier)?.preferredFilenameExtension ?? "mov"
+        let name = "Video-\(Int(Date().timeIntervalSince1970))-\(index).\(ext)"
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
+        let error: Error? = await withCheckedContinuation { continuation in
+            PHAssetResourceManager.default().writeData(for: resource, toFile: url, options: nil) { error in
+                continuation.resume(returning: error)
+            }
+        }
+        return error == nil ? url : nil
     }
 
     private static func isHEIF(_ type: UTType?) -> Bool {

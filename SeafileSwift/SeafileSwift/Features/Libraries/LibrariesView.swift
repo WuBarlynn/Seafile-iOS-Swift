@@ -6,6 +6,7 @@ struct LibrariesView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var searchText = ""
+    @State private var navigationPath: [FolderRoute] = []
     @State private var showCreateLibrary = false
     @State private var showAccountSwitcher = false
     @State private var showSearch = false
@@ -39,7 +40,7 @@ struct LibrariesView: View {
     }
 
     private var compactLayout: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ZStack {
                 SeafileBackground()
                 ScrollView {
@@ -152,8 +153,22 @@ struct LibrariesView: View {
                 if session.repositories.isEmpty {
                     await session.refreshLibraries()
                 }
+                consumeDeepLink()
+            }
+            .onChange(of: app.pendingDeepLink) { _, _ in
+                consumeDeepLink()
             }
         }
+    }
+
+    private func consumeDeepLink() {
+        guard horizontalSizeClass != .regular,
+              let request = app.pendingDeepLink,
+              let repo = session.repositories.first(where: { $0.id == request.repoID }) else {
+            return
+        }
+        app.pendingDeepLink = nil
+        navigationPath = [FolderRoute(repo: repo, path: request.path)]
     }
 
     private func repositorySection(_ section: RepositorySection) -> some View {

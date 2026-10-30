@@ -25,6 +25,10 @@ committed.
 
 No GitHub Release or prebuilt IPA is published from this repository.
 
+The current development version is **0.9.0**. The project will be versioned
+independently from the upstream Seafile iOS client and is planned to become
+**1.0** once the remaining development work is complete.
+
 ## Requirements
 
 - Xcode 26 or later

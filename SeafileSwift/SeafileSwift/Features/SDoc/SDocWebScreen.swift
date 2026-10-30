@@ -667,7 +667,7 @@ private struct SDocWebView: UIViewRepresentable {
         context.coordinator.observe(webView)
         webView.evaluateJavaScript("navigator.userAgent") { result, _ in
             let base = (result as? String) ?? ""
-            let suffix = " Seafile iOS/4.0.7"
+            let suffix = " Seafile iOS/\(APIClient.appVersion)"
             webView.customUserAgent = base.contains("Seafile iOS/") ? base : base + suffix
             context.coordinator.loadInitialPage()
         }
@@ -802,7 +802,7 @@ private struct SDocWebView: UIViewRepresentable {
 
             switch action {
             case "app.version.get":
-                respond(callbackId, value: "4.0.7-1")
+                respond(callbackId, value: "\(APIClient.appVersion)-1")
             case "page.status.height.get":
                 respond(callbackId, value: "\(UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.statusBarManager?.statusBarFrame.height }.max() ?? 20)")
             case "app.toast.show":

@@ -34,7 +34,7 @@ enum NetworkSessionFactory {
         configuration.timeoutIntervalForResource = 3600
         configuration.waitsForConnectivity = false
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
-        configuration.httpAdditionalHeaders = ["User-Agent": "Seafile-iOS/4.0.7 (SwiftUI)"]
+        configuration.httpAdditionalHeaders = ["User-Agent": "Seafile-iOS-Swift/\(APIClient.appVersion)"]
         let delegate = ServerTrustDelegate(allowUntrusted: allowUntrusted)
         return URLSession(configuration: configuration, delegate: delegate, delegateQueue: nil)
     }

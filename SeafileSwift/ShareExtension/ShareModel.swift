@@ -10,6 +10,18 @@ final class ShareModel {
         let path: String
     }
 
+    struct RecentDestination: Identifiable, Hashable {
+        let repoID: String
+        let repoName: String
+        let path: String
+
+        var id: String { repoID + "|" + path }
+
+        var displayName: String {
+            path == "/" ? repoName : (path as NSString).lastPathComponent
+        }
+    }
+
     private(set) var accounts: [SharedAccount] = []
     var selectedAccountID: String?
     var items: [SharedItem] = []
@@ -20,6 +32,8 @@ final class ShareModel {
     var currentRepo: ShareRepo?
     var currentPath = "/"
     var directories: [ShareDirent] = []
+    var starredDirs: [ShareStarredDir] = []
+    var recentDirs: [RecentDestination] = []
     var isUploading = false
     var uploadProgress: Double = 0
     var errorText: String?
@@ -78,6 +92,8 @@ final class ShareModel {
     func loadInitial() async {
         guard account != nil else { return }
         await loadRepos()
+        recentDirs = storedRecents()
+        await loadStarred()
         guard let destination = storedDestination(),
               let repo = repos.first(where: { $0.id == destination.repoID }) else {
             return
@@ -85,6 +101,29 @@ final class ShareModel {
         currentRepo = repo
         currentPath = destination.path
         await loadDirectories()
+    }
+
+    func openStarred(_ item: ShareStarredDir) async {
+        guard let repo = repos.first(where: { $0.id == item.repoID }) else { return }
+        currentRepo = repo
+        currentPath = item.path
+        await loadDirectories()
+    }
+
+    func openRecent(_ item: RecentDestination) async {
+        guard let repo = repos.first(where: { $0.id == item.repoID }) else { return }
+        currentRepo = repo
+        currentPath = item.path
+        await loadDirectories()
+    }
+
+    private func loadStarred() async {
+        guard let account else {
+            starredDirs = []
+            return
+        }
+        let client = ShareAPIClient(account: account)
+        starredDirs = (try? await client.starredDirectories()) ?? []
     }
 
     func loadRepos() async {
@@ -212,6 +251,37 @@ final class ShareModel {
         }
         ShareSessionStore.defaults?.set(data, forKey: destinationKey(account.id))
         ShareSessionStore.defaults?.set(account.id, forKey: "share.lastAccountID")
+        recordRecent(repo: repo, path: path)
+    }
+
+    private func recentKey(_ accountID: String) -> String {
+        "share.recent.\(accountID)"
+    }
+
+    private func storedRecents() -> [RecentDestination] {
+        guard let account,
+              let data = ShareSessionStore.defaults?.data(forKey: recentKey(account.id)),
+              let list = try? JSONDecoder().decode([StoredDestination].self, from: data) else {
+            return []
+        }
+        return list.map {
+            RecentDestination(repoID: $0.repoID, repoName: $0.repoName, path: $0.path)
+        }
+    }
+
+    private func recordRecent(repo: ShareRepo, path: String) {
+        guard let account else { return }
+        var list = storedRecents()
+        list.removeAll { $0.repoID == repo.id && $0.path == path }
+        list.insert(RecentDestination(repoID: repo.id, repoName: repo.name, path: path), at: 0)
+        list = Array(list.prefix(5))
+        let stored = list.map {
+            StoredDestination(repoID: $0.repoID, repoName: $0.repoName, path: $0.path)
+        }
+        if let data = try? JSONEncoder().encode(stored) {
+            ShareSessionStore.defaults?.set(data, forKey: recentKey(account.id))
+        }
+        recentDirs = list
     }
 
     private func join(_ base: String, _ name: String) -> String {

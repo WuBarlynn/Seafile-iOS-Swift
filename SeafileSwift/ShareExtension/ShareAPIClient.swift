@@ -20,6 +20,14 @@ struct ShareDirent: Decodable, Identifiable {
     var stableID: String { id ?? name }
 }
 
+struct ShareStarredDir: Identifiable, Hashable {
+    let repoID: String
+    let path: String
+    let name: String
+
+    var id: String { repoID + "|" + path }
+}
+
 enum ShareAPIError: LocalizedError {
     case invalidServer
     case invalidResponse
@@ -73,6 +81,23 @@ final class ShareAPIClient: NSObject, URLSessionTaskDelegate, @unchecked Sendabl
         let entries = (try? decoder.decode([ShareDirent].self, from: data)) ?? []
         return entries.filter(\.isDirectory).sorted {
             $0.name.localizedStandardCompare($1.name) == .orderedAscending
+        }
+    }
+
+    func starredDirectories() async throws -> [ShareStarredDir] {
+        let data = try await get("api2/starredfiles/")
+        guard let array = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            return []
+        }
+        return array.compactMap { json in
+            guard let repoID = json["repo_id"] as? String,
+                  let path = json["path"] as? String,
+                  (json["is_dir"] as? NSNumber)?.boolValue == true,
+                  (json["repo_encrypted"] as? NSNumber)?.boolValue != true else {
+                return nil
+            }
+            let name = (json["obj_name"] as? String) ?? (path as NSString).lastPathComponent
+            return ShareStarredDir(repoID: repoID, path: path, name: name)
         }
     }
 

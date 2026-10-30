@@ -103,6 +103,36 @@ struct ShareRootView: View {
                 }
             }
 
+            if !model.recentDirs.isEmpty {
+                Section("Recent") {
+                    ForEach(model.recentDirs) { item in
+                        Button {
+                            Task { await model.openRecent(item) }
+                        } label: {
+                            shortcutRow(title: item.displayName,
+                                        subtitle: repoSubtitle(item.repoName, path: item.path),
+                                        icon: "clock.arrow.circlepath")
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+
+            if !model.starredDirs.isEmpty {
+                Section("Starred") {
+                    ForEach(model.starredDirs) { item in
+                        Button {
+                            Task { await model.openStarred(item) }
+                        } label: {
+                            shortcutRow(title: item.name,
+                                        subtitle: repoSubtitle(repoName(for: item.repoID), path: item.path),
+                                        icon: "star.fill")
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+
             Section("Libraries") {
                 if model.isLoadingRepos {
                     HStack(spacing: 10) {
@@ -249,6 +279,32 @@ struct ShareRootView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private func shortcutRow(title: String, subtitle: String, icon: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundStyle(.orange)
+                .frame(width: 22)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer()
+        }
+    }
+
+    private func repoSubtitle(_ repoName: String, path: String) -> String {
+        path == "/" ? repoName : repoName + path
+    }
+
+    private func repoName(for repoID: String) -> String {
+        model.repos.first(where: { $0.id == repoID })?.name ?? ""
     }
 
     private func repoRow(_ repo: ShareRepo) -> some View {

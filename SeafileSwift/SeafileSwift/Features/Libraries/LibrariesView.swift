@@ -4,6 +4,7 @@ import SwiftUI
 struct LibrariesView: View {
     @Environment(Session.self) private var session
     @Environment(AppModel.self) private var app
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var searchText = ""
     @State private var showCreateLibrary = false
     @State private var showAccountSwitcher = false
@@ -30,6 +31,14 @@ struct LibrariesView: View {
     }
 
     var body: some View {
+        if horizontalSizeClass == .regular {
+            LibrarySplitBrowser()
+        } else {
+            compactLayout
+        }
+    }
+
+    private var compactLayout: some View {
         NavigationStack {
             ZStack {
                 SeafileBackground()
